@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sat Feb  5 01:35:48 2022
+# Make data base, printed on Sun Feb  6 17:52:21 2022
 
 # Variables
 
@@ -51,13 +51,13 @@ SNAP_DATA = /var/snap/code/86
 # environment
 VSCODE_NLS_CONFIG = {"locale":"en-gb","availableLanguages":{},"_languagePackSupport":true}
 # environment
-JOURNAL_STREAM = 8:64899
+JOURNAL_STREAM = 8:67261
 # makefile (from 'makefile', line 2)
 CFLAGS = -g -Wall
 # environment
 XDG_CONFIG_DIRS = /etc/xdg/xdg-ubuntu:/etc/xdg
 # makefile (from 'makefile', line 11)
-CPP_OBJS :=  build/parser.o  build/main.o
+CPP_OBJS :=  build/parser.o  build/main.o  build/isa.o
 # environment
 SNAP_INSTANCE_NAME = code
 # environment
@@ -83,11 +83,11 @@ _ = /snap/code/86/usr/share/code/code
 # 'override' directive
 .SHELLSTATUS := 0
 # environment
-MANAGERPID = 2138
+MANAGERPID = 2225
 # environment
 OPENCV_CFLAGS = -I/usr/include/opencv2/
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-ce39937e-a1f6-4ab8-a020-7e47781a7541.sock
+VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-a066c650-8e17-44d6-8c1a-d7a9afe812a6.sock
 # environment
 VSCODE_CWD = /home/tom
 # environment
@@ -103,7 +103,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # environment
 LSCOLORS = Gxfxcxdxbxegedabagacad
 # environment
-SESSION_MANAGER = local/tom-XPS-15:@/tmp/.ICE-unix/2406,unix/tom-XPS-15:/tmp/.ICE-unix/2406
+SESSION_MANAGER = local/tom-XPS-15:@/tmp/.ICE-unix/2528,unix/tom-XPS-15:/tmp/.ICE-unix/2528
 # environment
 XDG_RUNTIME_DIR = /run/user/1000
 # environment
@@ -127,7 +127,7 @@ DISABLE_WAYLAND = 1
 # environment
 VSCODE_CRASH_REPORTER_START_OPTIONS = {"companyName":"Microsoft","productName":"VSCode","submitURL":"appcenter://code?aid=fba07a4d-84bd-4fc8-a125-9640fc8ce171&uid=258ce5de-8fcb-40fb-81e6-128fecb96f63&iid=258ce5de-8fcb-40fb-81e6-128fecb96f63&sid=258ce5de-8fcb-40fb-81e6-128fecb96f63","uploadToServer":true}
 # environment
-INVOCATION_ID = dd986fb9d2714875ad8f9637e49db66d
+INVOCATION_ID = 7b688271072f46169e78c1e25c9508c5
 # environment
 GDK_PIXBUF_MODULEDIR = /snap/code/86/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders
 # default
@@ -141,7 +141,7 @@ XDG_SESSION_DESKTOP = ubuntu
 # environment
 SSH_AUTH_SOCK = /run/user/1000/keyring/ssh
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 2976110
+GIO_LAUNCHED_DESKTOP_FILE_PID = 6313
 # automatic
 %F = $(notdir $%)
 # environment
@@ -161,9 +161,9 @@ PWD = /home/tom/university/y3/ac/cw
 # default
 .LOADED := 
 # environment
-SSH_AGENT_PID = 2363
+SSH_AGENT_PID = 2485
 # makefile (from 'makefile', line 9)
-CPP_SRCS := src/parser/parser.cpp src/main.cpp
+CPP_SRCS := src/parser/parser.cpp src/main.cpp src/isa/isa.cpp
 # environment
 ORIGINAL_XDG_CURRENT_DESKTOP = ubuntu:GNOME
 # environment
@@ -277,7 +277,6 @@ SNAP_COOKIE = DSPxJZuOO6QzUrUcCOtuorp-OCzEGfBicGuC57kxJxE4bitEfRV-
 # automatic
 <F = $(notdir $<)
 # environment
- 
 ELECTRON_RUN_AS_NODE = 1
 # environment
 SNAP_NAME = code
@@ -291,6 +290,7 @@ CONDA_PYTHON_EXE = /home/tom/anaconda3/bin/python
 GJS_DEBUG_TOPICS = JS ERROR;JS LOG
 # environment
 O_LIBS = -L/usr/lib64/ -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml -lopencv_video -lopencv_features2d -lopencv_calib3d -lopencv_objdetect -lopencv_contrib -lopencv_legacy -lopencv_flann
+ 
 # automatic
 ^F = $(notdir $^)
 # default
@@ -312,7 +312,7 @@ GJS_DEBUG_OUTPUT = stderr
 # environment
 LANG = C
 # environment
-VSCODE_PID = 2976155
+VSCODE_PID = 6366
 # environment
 _CE_CONDA = 
 # variable set hash-table stats:
@@ -327,9 +327,9 @@ _CE_CONDA =
 # . (device 66308, inode 10887177): 11 files, no impossibilities.
 # src (device 66308, inode 10887183): 5 files, no impossibilities.
 # src/parser (device 66308, inode 13770159): 4 files, no impossibilities.
-# src/isa (device 66308, inode 10887548): 3 files, no impossibilities.
+# src/isa (device 66308, inode 10887548): 4 files, no impossibilities.
 
-# 23 files, no impossibilities in 4 directories.
+# 24 files, no impossibilities in 4 directories.
 
 # Implicit Rules
 
@@ -357,7 +357,7 @@ all: dir simulator
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/5=0%
 
-simulator: build/parser.o build/main.o
+simulator: build/parser.o build/main.o build/isa.o
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -433,8 +433,14 @@ build/parser.o:
 #  Modification time never checked.
 #  File has not been updated.
 
+# Not a target:
+build/isa.o:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
 # files hash-table stats:
-# Load=10/1024=1%, Rehash=0, Collisions=0/37=0%
+# Load=11/1024=1%, Rehash=0, Collisions=0/39=0%
 # VPATH Search Paths
 
 # No 'vpath' search paths.
@@ -442,12 +448,12 @@ build/parser.o:
 # General ('VPATH' variable) search path:
 # src:src/parser:src/isa
 
-# strcache buffers: 1 (0) / strings = 32 / storage = 257 B / avg = 8 B
-# current buf: size = 8162 B / used = 257 B / count = 32 / avg = 8 B
+# strcache buffers: 1 (0) / strings = 34 / storage = 277 B / avg = 8 B
+# current buf: size = 8162 B / used = 277 B / count = 34 / avg = 8 B
 
-# strcache performance: lookups = 57 / hit rate = 43%
+# strcache performance: lookups = 59 / hit rate = 42%
 # hash-table stats:
-# Load=32/8192=0%, Rehash=0, Collisions=4/57=7%
-# Finished Make data base on Sat Feb  5 01:35:48 2022
+# Load=34/8192=0%, Rehash=0, Collisions=4/59=7%
+# Finished Make data base on Sun Feb  6 17:52:21 2022
 
  

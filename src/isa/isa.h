@@ -9,6 +9,8 @@ enum OPCODE
     STORE,
     ADD,
     SUB,
+    ADDI,
+    HLT,
 
     NOP,
 };
@@ -114,6 +116,8 @@ enum INSTRUCTION_FORMAT
     B,
     U,
     J,
+    PSEUDO,
+    SPECIAL,
 
     INSTRUCTION_FORMAT_COUNT // unused
 };
@@ -123,6 +127,8 @@ extern int32_t registers[REG_UNUSED];
 // Instructions as CPU operations:
 void CPU_Add(REGISTER_ABI_NAME rd, REGISTER_ABI_NAME rs1, REGISTER_ABI_NAME rs2);
 void CPU_Sub(REGISTER_ABI_NAME rd, REGISTER_ABI_NAME rs1, REGISTER_ABI_NAME rs2);
+void CPU_AddI(REGISTER_ABI_NAME rd, REGISTER_ABI_NAME rs1, int32_t imm);
+void CPU_Halt();
 
 class Instruction
 {
@@ -157,6 +163,12 @@ public:
         imm = _imm;
     }
 
+    Instruction(OPCODE _opcode, INSTRUCTION_FORMAT _format)
+    {
+        format = _format;
+        opcode = _opcode;
+    }
+
     void Execute()
     {
         switch (format)
@@ -165,12 +177,14 @@ public:
             Execute_R();
             break;
         case I:
+            Execute_I();
             break;
         case S:
             break;
         case B:
             break;
         default:
+            CPU_Halt();
             break;
         }
     }
@@ -182,6 +196,19 @@ private:
         {
         case ADD:
             CPU_Add(rd, rs1, rs2);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    void Execute_I()
+    {
+        switch (opcode)
+        {
+        case ADDI:
+            CPU_AddI(rd, rs1, imm);
             break;
 
         default:

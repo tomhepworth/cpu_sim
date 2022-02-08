@@ -2,7 +2,13 @@
 #include <stdio.h>
 #include "parser.h"
 #include <string>
+#include "main.h"
 
+#define MEMORY_SIZE 65536 // Memory size in WORDS
+
+static int32_t memory[MEMORY_SIZE];
+bool running = true;
+int cycles = 0;
 int main(int argc, char const *argv[])
 {
     if (argc < 2)
@@ -12,16 +18,29 @@ int main(int argc, char const *argv[])
     }
 
     std::string filename = argv[1];
-    printf("Running: %s\n", filename.c_str());
 
-    program p = parse(filename);
+    printf("Parsing: %s\n", filename.c_str());
+    runnable_program program = parse(filename);
 
-    registers[RA] = 2;
-    registers[SP] = 3;
+    printf("Running...\n");
 
-    printf("REG: %d\n", registers[GP]);
-    p[0].Execute();
-    printf("REG: %d\n", registers[GP]);
+    registers[PC] = 0;
+    while (running)
+    {
+        cycles++;
+        // printf("Cycle %d\n", cycles);
+        // Fetch
+        Instruction i = program[registers[PC]];
+
+        // Decode already done
+
+        // Execute
+        i.Execute();
+
+        registers[PC] += 1;
+    }
+
+    printf("Program finished executing in %d cycles. T0 was %d\n", cycles, registers[T0]);
 
     return 0;
 }

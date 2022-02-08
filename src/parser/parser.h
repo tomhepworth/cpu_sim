@@ -6,10 +6,10 @@
 #include <vector>
 #include <map>
 
-typedef std::vector<Instruction> program;
+typedef std::vector<Instruction> runnable_program;
 
 extern std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap;
 
-program parse(std::string filename);
+runnable_program parse(std::string filename);
 
 #endif

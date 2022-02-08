@@ -1,12 +1,14 @@
 make --dry-run --always-make --keep-going --print-directory
 make: Entering directory '/home/tom/university/y3/ac/cw'
-echo src/parser/parser.cpp src/main.cpp
-echo  build/parser.o  build/main.o
+echo src/parser/parser.cpp src/main.cpp src/isa/isa.cpp
+echo  build/parser.o  build/main.o  build/isa.o
 mkdir -p build
 echo build/parser.o
 g++ -c -g -Wall src/parser/parser.cpp -o build/parser.o -Isrc -Isrc/parser/ -Isrc/isa/
 echo build/main.o
 g++ -c -g -Wall src/main.cpp -o build/main.o -Isrc -Isrc/parser/ -Isrc/isa/
-g++ -g -Wall -o simulator build/parser.o build/main.o 
+echo build/isa.o
+g++ -c -g -Wall src/isa/isa.cpp -o build/isa.o -Isrc -Isrc/parser/ -Isrc/isa/
+g++ -g -Wall -o simulator build/parser.o build/main.o build/isa.o 
 make: Leaving directory '/home/tom/university/y3/ac/cw'
  
