@@ -133,7 +133,6 @@ void CPU_Halt();
 class Instruction
 {
 private:
-    OPCODE opcode;
     INSTRUCTION_FORMAT format; // not sure if needed
     REGISTER_ABI_NAME rs1;
     REGISTER_ABI_NAME rs2;
@@ -141,6 +140,9 @@ private:
     int imm;
 
 public:
+    OPCODE opcode;
+
+    Instruction();
     // R-type instruction constructor
     Instruction(OPCODE _opcode, INSTRUCTION_FORMAT _format, REGISTER_ABI_NAME _rd, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2)
     {

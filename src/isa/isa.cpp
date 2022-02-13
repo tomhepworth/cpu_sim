@@ -4,6 +4,10 @@
 
 int32_t registers[REG_UNUSED]; // extern in isa.h
 
+Instruction::Instruction()
+{
+}
+
 void CPU_Halt()
 {
     printf("HALTING\n");

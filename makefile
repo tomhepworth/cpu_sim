@@ -3,7 +3,7 @@ CFLAGS = -g -Wall
 SOURCE_DIR := src
 INCLUDES := $(SUBDIR_INCLUDES)
 BUILD_DIR := build
-VPATH = src src/parser/ src/isa/
+VPATH = src src/parser/ src/isa/ src/cpu/
 
 # CPP_SRCS := $(shell find $(SOURCE_DIR) -name \*.h -print -o -name \*.cpp -print)
 CPP_SRCS := $(shell find $(SOURCE_DIR)/ -name \*.cpp -print)

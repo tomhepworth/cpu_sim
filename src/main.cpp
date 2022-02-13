@@ -1,14 +1,29 @@
 #include "isa.h"
 #include <stdio.h>
+#include <iostream>
+#include <chrono>
+#include <thread>
+
 #include "parser.h"
 #include <string>
 #include "main.h"
+#include "cpu.h"
 
 #define MEMORY_SIZE 65536 // Memory size in WORDS
 
 static int32_t memory[MEMORY_SIZE];
 bool running = true;
 int cycles = 0;
+
+enum CPU_STAGE
+{
+    FETCH,
+    DECODE,
+    BLAH,
+    EXECUTE,
+    WRITEBACK
+};
+
 int main(int argc, char const *argv[])
 {
     if (argc < 2)
@@ -18,26 +33,33 @@ int main(int argc, char const *argv[])
     }
 
     std::string filename = argv[1];
-
     printf("Parsing: %s\n", filename.c_str());
     runnable_program program = parse(filename);
 
+    Pipeline pipeline = Pipeline(program);
+    CPU cpu = CPU(pipeline);
+
+    cpu.LoadProgram(program);
+
     printf("Running...\n");
+
+    // Todo:
+    //  Pipeline fetch,decode,execute
 
     registers[PC] = 0;
     while (running)
     {
         cycles++;
-        // printf("Cycle %d\n", cycles);
-        // Fetch
-        Instruction i = program[registers[PC]];
+        cpu.Cycle();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        // Decode already done
+        // // Fetch & Decode
+        // Instruction i = program[registers[PC]];
 
-        // Execute
-        i.Execute();
+        // // Execute
+        // i.Execute();
 
-        registers[PC] += 1;
+        // registers[PC] += 1;
     }
 
     printf("Program finished executing in %d cycles. T0 was %d\n", cycles, registers[T0]);

@@ -65,61 +65,77 @@ runnable_program parse(std::string filename)
     std::string line;
     std::vector<std::string> words;
     std::vector<std::vector<std::string>> parsedLines;
+
+    int lineNumber = 0;
     while (std::getline(file, line))
     {
-        std::size_t prev = 0, pos;
-        while ((pos = line.find_first_of(" ,\t", prev)) != std::string::npos)
+        lineNumber++;
+        try
         {
-            if (pos > prev)
-                words.push_back(line.substr(prev, pos - prev));
-            prev = pos + 1;
+            // If line is comment (beginning "//" ), skip
+            if (line[0] == '/' && line[1] == '/')
+                continue;
+
+            // If line is just a new line, skip
+            if (line[0] == '\n' || line[0] == '\0')
+                continue;
+
+            std::size_t prev = 0, pos;
+            while ((pos = line.find_first_of(" ,\t", prev)) != std::string::npos)
+            {
+                if (pos > prev)
+                    words.push_back(line.substr(prev, pos - prev));
+                prev = pos + 1;
+            }
+            if (prev < line.length())
+                words.push_back(line.substr(prev, std::string::npos));
+
+            // Now convert to instruction
+            std::pair<OPCODE, INSTRUCTION_FORMAT> decodedInstruciton = instructionMap.at(words[0]);
+            OPCODE opcode = decodedInstruciton.first;
+            INSTRUCTION_FORMAT format = decodedInstruciton.second;
+
+            Instruction *i;
+
+            switch (format)
+            {
+            case R:
+            {
+                REGISTER_ABI_NAME rd = registerMap.at(words[1]);
+                REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
+                REGISTER_ABI_NAME rs2 = registerMap.at(words[3]);
+
+                i = new Instruction(opcode, format, rd, rs1, rs2);
+                break;
+            }
+            case SPECIAL:
+            {
+                i = new Instruction(opcode, format);
+                break;
+            }
+            default:
+            {
+                REGISTER_ABI_NAME rd = registerMap.at(words[1]);
+                REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
+                int32_t imm = std::atoi(words[3].c_str());
+                i = new Instruction(opcode, format, rd, rs1, imm);
+                break;
+            }
+            }
+
+            prog.push_back(*i);
+
+            // cleanup
+            words.clear();
         }
-        if (prev < line.length())
-            words.push_back(line.substr(prev, std::string::npos));
-
-        parsedLines.push_back(words);
-        words.clear();
-    }
-
-    for (auto parsedLine : parsedLines)
-    {
-
-        // for (auto wd : parsedLine)
-        //     std::cout << wd << " | ";
-        // std::cout << std::endl;
-
-        std::pair<OPCODE, INSTRUCTION_FORMAT> decodedInstruciton = instructionMap.at(parsedLine[0]);
-        OPCODE opcode = decodedInstruciton.first;
-        INSTRUCTION_FORMAT format = decodedInstruciton.second;
-
-        Instruction *i;
-
-        switch (format)
+        catch (const std::exception &e)
         {
-        case R:
-        {
-            REGISTER_ABI_NAME rd = registerMap.at(parsedLine[1]);
-            REGISTER_ABI_NAME rs1 = registerMap.at(parsedLine[2]);
-            REGISTER_ABI_NAME rs2 = registerMap.at(parsedLine[3]);
+            std::cerr << "Parser error on line " << lineNumber << " caused by: " << e.what() << std::endl;
 
-            i = new Instruction(opcode, format, rd, rs1, rs2);
-            break;
+            // Return empty program so CPU does nothing
+            runnable_program empty;
+            return empty;
         }
-        case SPECIAL:
-        {
-            i = new Instruction(opcode, format);
-            break;
-        }
-        default:
-        {
-            REGISTER_ABI_NAME rd = registerMap.at(parsedLine[1]);
-            REGISTER_ABI_NAME rs1 = registerMap.at(parsedLine[2]);
-            int32_t imm = std::atoi(parsedLine[3].c_str());
-            i = new Instruction(opcode, format, rd, rs1, imm);
-            break;
-        }
-        }
-        prog.push_back(*i);
     }
 
     return prog;
