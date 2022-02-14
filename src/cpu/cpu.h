@@ -6,28 +6,28 @@
 #include "parser.h"
 #include "isa.h"
 
+// Execution stages
+enum CPU_STAGE
+{
+    FETCH,
+    DECODE,
+    EXECUTE,
+    MEMORY,
+    WRITEBACK,
+    STAGE_COUNT // Not used, just equals number of stages
+};
+
 class Pipeline
 {
 private:
     runnable_program program;
-
-    enum STAGES
-    {
-        FETCH,
-        DECODE,
-        EXECUTE,
-        MEMORY,
-        WRITEBACK,
-        STAGE_COUNT // Not used, just equals number of stages
-    };
 
     int stageIndexes[STAGE_COUNT];
 
     Instruction instructionBuffer[STAGE_COUNT];
 
 public:
-    // std::string name;
-
+    bool printStages = false;
     Pipeline();
     Pipeline(runnable_program prog);
 

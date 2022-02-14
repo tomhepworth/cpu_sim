@@ -15,14 +15,7 @@ static int32_t memory[MEMORY_SIZE];
 bool running = true;
 int cycles = 0;
 
-enum CPU_STAGE
-{
-    FETCH,
-    DECODE,
-    BLAH,
-    EXECUTE,
-    WRITEBACK
-};
+bool debug = true;
 
 int main(int argc, char const *argv[])
 {
@@ -41,10 +34,13 @@ int main(int argc, char const *argv[])
 
     cpu.LoadProgram(program);
 
-    printf("Running...\n");
+    if (debug)
+    {
+        printf("Using debug settings\n");
+        pipeline.printStages = true;
+    }
 
-    // Todo:
-    //  Pipeline fetch,decode,execute
+    printf("Running...\n");
 
     registers[PC] = 0;
     while (running)
@@ -52,14 +48,6 @@ int main(int argc, char const *argv[])
         cycles++;
         cpu.Cycle();
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-        // // Fetch & Decode
-        // Instruction i = program[registers[PC]];
-
-        // // Execute
-        // i.Execute();
-
-        // registers[PC] += 1;
     }
 
     printf("Program finished executing in %d cycles. T0 was %d\n", cycles, registers[T0]);

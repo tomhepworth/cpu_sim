@@ -5,6 +5,7 @@
 
 enum OPCODE
 {
+    NOP, // Keep nop zero for some pipeline logic
     LOAD,
     STORE,
     ADD,
@@ -12,7 +13,6 @@ enum OPCODE
     ADDI,
     HLT,
 
-    NOP,
 };
 
 // https://en.wikichip.org/wiki/risc-v/registers
