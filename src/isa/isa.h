@@ -2,7 +2,11 @@
 #define ISA_H
 
 #include <cinttypes>
+#include <assert.h>
 
+typedef int32_t memory_address;
+
+// All the opcodes supported by the cpu
 enum OPCODE
 {
     NOP, // Keep nop zero for some pipeline logic
@@ -12,7 +16,17 @@ enum OPCODE
     SUB,
     ADDI,
     HLT,
+};
 
+// Execution stages
+enum CPU_STAGE
+{
+    FETCH,
+    DECODE,
+    EXECUTE,
+    MEMORY,
+    WRITEBACK,
+    STAGE_COUNT // Not used, just equals number of stages
 };
 
 // https://en.wikichip.org/wiki/risc-v/registers
@@ -124,99 +138,10 @@ enum INSTRUCTION_FORMAT
 
 extern int32_t registers[REG_UNUSED];
 
-// Instructions as CPU operations:
-void CPU_Add(REGISTER_ABI_NAME rd, REGISTER_ABI_NAME rs1, REGISTER_ABI_NAME rs2);
-void CPU_Sub(REGISTER_ABI_NAME rd, REGISTER_ABI_NAME rs1, REGISTER_ABI_NAME rs2);
-void CPU_AddI(REGISTER_ABI_NAME rd, REGISTER_ABI_NAME rs1, int32_t imm);
-void CPU_Halt();
+// This function models all the ALU operations as generally as I can (IE, adds are all combined)
+int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2);
 
-class Instruction
-{
-private:
-    INSTRUCTION_FORMAT format; // not sure if needed
-    REGISTER_ABI_NAME rs1;
-    REGISTER_ABI_NAME rs2;
-    REGISTER_ABI_NAME rd;
-    int imm;
-
-public:
-    OPCODE opcode;
-
-    Instruction();
-    // R-type instruction constructor
-    Instruction(OPCODE _opcode, INSTRUCTION_FORMAT _format, REGISTER_ABI_NAME _rd, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2)
-    {
-        format = _format;
-        opcode = _opcode;
-        rs1 = _rs1;
-        rs2 = _rs2;
-        rd = _rd;
-    }
-
-    // I-type, S-type, B-type instruction all have the same signature
-    Instruction(OPCODE _opcode, INSTRUCTION_FORMAT _format, REGISTER_ABI_NAME _rd, REGISTER_ABI_NAME _rs1, int32_t _imm)
-    {
-        format = _format;
-        opcode = _opcode;
-        rs1 = _rs1;
-        rd = _rd;
-
-        // Imm shoud be different lengths depending on format (see spec), TODO (maybe): add some stuff to make that happen
-        imm = _imm;
-    }
-
-    Instruction(OPCODE _opcode, INSTRUCTION_FORMAT _format)
-    {
-        format = _format;
-        opcode = _opcode;
-    }
-
-    void Execute()
-    {
-        switch (format)
-        {
-        case R:
-            Execute_R();
-            break;
-        case I:
-            Execute_I();
-            break;
-        case S:
-            break;
-        case B:
-            break;
-        default:
-            CPU_Halt();
-            break;
-        }
-    }
-
-private:
-    void Execute_R()
-    {
-        switch (opcode)
-        {
-        case ADD:
-            CPU_Add(rd, rs1, rs2);
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    void Execute_I()
-    {
-        switch (opcode)
-        {
-        case ADDI:
-            CPU_AddI(rd, rs1, imm);
-            break;
-
-        default:
-            break;
-        }
-    }
-};
+// This function models all the ALU operations as generally as I can (IE, adds are all combined)
+int PerformMemoryOperation(OPCODE opcode, memory_address destination, int32_t value);
 
 #endif

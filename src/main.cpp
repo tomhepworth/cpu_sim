@@ -7,15 +7,25 @@
 #include "parser.h"
 #include <string>
 #include "main.h"
+#include "isa.h"
 #include "cpu.h"
 
 #define MEMORY_SIZE 65536 // Memory size in WORDS
 
 static int32_t memory[MEMORY_SIZE];
-bool running = true;
+
+bool running = true; // Global used for dealing with HTL instruction
+bool debug = true;   // global debug
+
 int cycles = 0;
 
-bool debug = true;
+void regDump()
+{
+    for (size_t i = 0; i < REGABI_UNUSED; i++)
+    {
+        std::cout << i << ":\t" << registers[i] << std::endl;
+    }
+}
 
 int main(int argc, char const *argv[])
 {
@@ -27,17 +37,24 @@ int main(int argc, char const *argv[])
 
     std::string filename = argv[1];
     printf("Parsing: %s\n", filename.c_str());
-    runnable_program program = parse(filename);
+    runnable_program program;
 
-    Pipeline pipeline = Pipeline(program);
-    CPU cpu = CPU(pipeline);
+    bool parsingSuccess = parse(filename, &program);
+    if (!parsingSuccess)
+    {
+        exit(EXIT_FAILURE);
+    }
 
-    cpu.LoadProgram(program);
+    Pipeline pipeline = Pipeline();
+    Scoreboard *scoreboard = new SimpleScoreboard();
+
+    CPU cpu = CPU(&pipeline, scoreboard);
+
+    cpu.LoadProgram(&program);
 
     if (debug)
     {
         printf("Using debug settings\n");
-        pipeline.printStages = true;
     }
 
     printf("Running...\n");
@@ -47,10 +64,12 @@ int main(int argc, char const *argv[])
     {
         cycles++;
         cpu.Cycle();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
     }
 
-    printf("Program finished executing in %d cycles. T0 was %d\n", cycles, registers[T0]);
+    printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), registers[T0]);
+
+    regDump();
 
     return 0;
 }

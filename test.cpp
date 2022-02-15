@@ -40,7 +40,7 @@ void ChildClass::doThing()
     printf("Child class version did thing\n");
 }
 
-class GrandchildClass : public BaseClass
+class GrandchildClass : public ChildClass
 {
 private:
 public:
@@ -64,6 +64,9 @@ int main(int argc, char const *argv[])
     BaseClass *test = new GrandchildClass();
     BaseClass *test2 = new BaseClass();
     BaseClass *test3 = new ChildClass();
+
+    BaseClass test4 = GrandchildClass();
+    test4.PassToGrandChild();
 
     test->doThing();
     test->justInBase();

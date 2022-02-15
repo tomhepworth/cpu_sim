@@ -1,15 +1,17 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <isa.h>
+#include "isa.h"
+#include "instruction.h"
+
 #include <string>
 #include <vector>
 #include <map>
 
-typedef std::vector<Instruction> runnable_program;
+typedef std::vector<Instruction *> runnable_program;
 
 extern std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap;
 
-runnable_program parse(std::string filename);
+bool parse(std::string filename, runnable_program *prog);
 
 #endif

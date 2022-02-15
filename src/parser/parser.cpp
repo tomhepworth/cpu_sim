@@ -4,13 +4,14 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <instruction.h>
 
 std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap = {
     {"add", std::make_pair(ADD, R)},
     {"sub", std::make_pair(SUB, R)},
     {"addi", std::make_pair(ADDI, I)},
     {"hlt", std::make_pair(HLT, SPECIAL)},
-    {"nop", std::make_pair(ADD, I)}}; // extern in parser.h
+    {"nop", std::make_pair(NOP, SPECIAL)}}; // extern in parser.h
 
 std::map<std::string, REGISTER_ABI_NAME> registerMap = {
     {"zero", ZERO},
@@ -57,10 +58,8 @@ std::map<std::string, REGISTER_ABI_NAME> registerMap = {
 
 }; // extern in parser.h
 
-runnable_program parse(std::string filename)
+bool parse(std::string filename, runnable_program *prog)
 {
-    runnable_program prog;
-
     std::ifstream file(filename);
     std::string line;
     std::vector<std::string> words;
@@ -105,25 +104,59 @@ runnable_program parse(std::string filename)
                 REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
                 REGISTER_ABI_NAME rs2 = registerMap.at(words[3]);
 
-                i = new Instruction(opcode, format, rd, rs1, rs2);
+                i = new Instruction_R(opcode, rd, rs1, rs2);
+                break;
+            }
+            case I:
+            {
+                // TODO: Add parsing support for loading instrucitons: eg "lb t0, 8(sp)" to load t0 with (sp + 8)
+                REGISTER_ABI_NAME rd = registerMap.at(words[1]);
+                REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
+                int32_t imm = std::atoi(words[3].c_str());
+                i = new Instruction_I(opcode, rd, rs1, imm);
+                break;
+            }
+            case S:
+            {
+                // Add parsing support storing instructions Eg: SW rd, offset(rs1), stores rd into memory at rs1 + offset
+                REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
+                REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
+                int32_t imm = std::atoi(words[3].c_str());
+
+                i = new Instruction_S(opcode, rs1, rs2, imm);
+                break;
+            }
+            case B:
+            {
+                // Add parsing support storing unstructions Eg: SW rd, offset(rs1), stores rd into memory at rs1 + offset
+                REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
+                REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
+                int32_t imm = std::atoi(words[3].c_str());
+
+                i = new Instruction_B(opcode, rs1, rs2, imm);
                 break;
             }
             case SPECIAL:
             {
-                i = new Instruction(opcode, format);
+
+                // Handle special instructions individually
+                switch (opcode)
+                {
+                case HLT:
+                    i = new Instruction_Halt();
+                    break;
+                case NOP: // NOP is same as default
+                default:
+                    i = new Instruction();
+                    break;
+                }
                 break;
             }
             default:
-            {
-                REGISTER_ABI_NAME rd = registerMap.at(words[1]);
-                REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
-                int32_t imm = std::atoi(words[3].c_str());
-                i = new Instruction(opcode, format, rd, rs1, imm);
                 break;
             }
-            }
 
-            prog.push_back(*i);
+            prog->push_back(i);
 
             // cleanup
             words.clear();
@@ -131,12 +164,8 @@ runnable_program parse(std::string filename)
         catch (const std::exception &e)
         {
             std::cerr << "Parser error on line " << lineNumber << " caused by: " << e.what() << std::endl;
-
-            // Return empty program so CPU does nothing
-            runnable_program empty;
-            return empty;
+            return false;
         }
     }
-
-    return prog;
+    return true;
 }

@@ -2,13 +2,13 @@
 // Parser supports comments and empty lines
 
 // Load 5 into t0 - note zero and x0 are the same
-addi t0, zero, 5
+addi t3, zero, 5
 
 // Load 3 into t1 - note spaces betweem args are optional
 addi t1,x0,3
 
 // Add and write result to t0
-add t0,t0,t1
+add t0,t3,t1
 
 // Halt
 hlt
