@@ -12,7 +12,7 @@
 
 #define MEMORY_SIZE 65536 // Memory size in WORDS
 
-static int32_t memory[MEMORY_SIZE];
+int32_t memory[MEMORY_SIZE];
 
 bool running = true; // Global used for dealing with HTL instruction
 bool debug = true;   // global debug
@@ -21,10 +21,22 @@ int cycles = 0;
 
 void regDump()
 {
+    std::cout << "------------REG-DUMP-------------" << std::endl;
     for (size_t i = 0; i < REGABI_UNUSED; i++)
     {
         std::cout << i << ":\t" << registers[i] << std::endl;
     }
+    std::cout << "---------------------------------" << std::endl;
+}
+
+void memDump(int start, int end)
+{
+    std::cout << "------------MEM-DUMP-------------" << std::endl;
+    for (size_t i = start; i <= end; i++)
+    {
+        std::cout << "0x" << i << ":\t" << memory[i] << std::endl;
+    }
+    std::cout << "---------------------------------" << std::endl;
 }
 
 int main(int argc, char const *argv[])
@@ -64,12 +76,13 @@ int main(int argc, char const *argv[])
     {
         cycles++;
         cpu.Cycle();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), registers[T0]);
 
     regDump();
+    memDump(0, 10);
 
     return 0;
 }

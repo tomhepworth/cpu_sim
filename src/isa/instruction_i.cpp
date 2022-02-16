@@ -52,11 +52,44 @@ bool Instruction_I::execute(Scoreboard *scoreboard)
     rdValue = PerformALUOperation(opcode, rs1Value, imm);
 
     if (debug)
-        printf("Setting rd (%d) to %d\n", rd, rdValue);
+        printf("LW: Setting rd (%d) to %d %d\n", rd, rdValue, imm);
 
     // Mark that we are free to advance in pipeline
     free[EXECUTE] = true;
 
+    return true;
+}
+
+bool Instruction_I::memoryAccess(Scoreboard *scoreboard)
+{
+    // If previous pipeline stage not completed we cant do this one
+    if (!free[EXECUTE])
+        return false;
+
+    /*
+        Switch on opcode to decide if instruction requires memory access.
+        For loads ( `lw rd, rs1, imm` or `lw rd, offset(rs1)`) use rdValue as memory address
+        For normal (`addi rd rs1 imm`) use rdValue as result
+
+        lw rd, rs1, imm ==> rd = Memory[rs1 +]
+        addi rd rs1 imm ==> rd = rs1 + imm;
+    */
+    switch (opcode)
+    {
+    case LW:
+    {
+        int32_t addr = rdValue;
+        rdValue = memory[addr];
+        printf("LW: Loaded %d from mem[%d]\n", rdValue, addr);
+        break;
+    }
+    default:
+        // Do nothing, already sorted in execute stage
+        break;
+    }
+
+    // Mark this stage as completed so instruction can advance in pipeline
+    free[MEMORY] = true;
     return true;
 }
 

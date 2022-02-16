@@ -15,6 +15,8 @@ enum OPCODE
     ADD,
     SUB,
     ADDI,
+    LW,
+    SW,
     HLT,
 };
 

@@ -12,7 +12,7 @@ Pipeline::Pipeline()
     }
 }
 
-void Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
+bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
 {
 
     // Shift all elements one place right and set FETCH to PC value
@@ -96,6 +96,8 @@ void Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
 
         // scoreboard->log();
     }
+
+    return !piplineFrozen;
 }
 
 CPU::CPU()
@@ -139,10 +141,12 @@ void CPU::Cycle()
     }
 
     // Advance the pipeline
-    pipeline->Advance(program, scoreboard);
+    bool pipelineAdvanced = pipeline->Advance(program, scoreboard);
 
-    // Increment PC
-    registers[PC]++;
+    // If the pipeline advanced we can move the pc along
+    if (pipelineAdvanced)
+        // Increment PC
+        registers[PC]++;
 
     // Increment cycle count
     cycles++;

@@ -10,6 +10,8 @@ std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap = {
     {"add", std::make_pair(ADD, R)},
     {"sub", std::make_pair(SUB, R)},
     {"addi", std::make_pair(ADDI, I)},
+    {"sw", std::make_pair(SW, S)},
+    {"lw", std::make_pair(LW, I)},
     {"hlt", std::make_pair(HLT, SPECIAL)},
     {"nop", std::make_pair(NOP, SPECIAL)}}; // extern in parser.h
 
@@ -109,26 +111,83 @@ bool parse(std::string filename, runnable_program *prog)
             }
             case I:
             {
-                // TODO: Add parsing support for loading instrucitons: eg "lb t0, 8(sp)" to load t0 with (sp + 8)
-                REGISTER_ABI_NAME rd = registerMap.at(words[1]);
-                REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
-                int32_t imm = std::atoi(words[3].c_str());
+                REGISTER_ABI_NAME rd;
+                REGISTER_ABI_NAME rs1;
+                int32_t imm;
+                if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
+                {
+                    std::string offsetString = "";
+                    std::string rs1String = "";
+                    std::string s = words[2];
+                    int i = 0;
+                    while (s[i] != '(') // Go until we see a bracket
+                    {
+                        offsetString += s[i];
+                        i++;
+                    }
+                    i++;                // skip the bracket
+                    while (s[i] != ')') // Go until we see a close bracket
+                    {
+                        rs1String += s[i];
+                        i++;
+                    }
+                    rd = registerMap.at(words[1]);
+                    rs1 = registerMap.at(rs1String);
+                    imm = std::atoi(offsetString.c_str());
+                    printf("LOAD OFFSETSTRING %s %d\n", offsetString.c_str(), imm);
+                }
+                else
+                {
+                    rd = registerMap.at(words[1]);
+                    rs1 = registerMap.at(words[2]);
+                    imm = std::atoi(words[3].c_str());
+                }
+
                 i = new Instruction_I(opcode, rd, rs1, imm);
                 break;
             }
             case S:
             {
-                // Add parsing support storing instructions Eg: SW rd, offset(rs1), stores rd into memory at rs1 + offset
-                REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
-                REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
-                int32_t imm = std::atoi(words[3].c_str());
+                REGISTER_ABI_NAME rs1;
+                REGISTER_ABI_NAME rs2;
+                int32_t imm;
+
+                // Add parsing support storing instructions Eg: SW rs1, offset(rs2) stores rs1 into memory at rs2 + offset
+                if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
+                {
+                    std::string offsetString = "";
+                    std::string rs2String = "";
+                    std::string s = words[2];
+                    int i = 0;
+                    while (s[i] != '(') // Go until we see a bracket
+                    {
+                        offsetString += s[i];
+                        i++;
+                    }
+                    i++;                // skip the bracket
+                    while (s[i] != ')') // Go until we see a close bracket
+                    {
+                        rs2String += s[i];
+                        i++;
+                    }
+
+                    rs1 = registerMap.at(words[1]);
+                    rs2 = registerMap.at(rs2String);
+                    imm = std::atoi(offsetString.c_str());
+                    printf("STOR OFFSETSTRING %s %d\n", offsetString.c_str(), imm);
+                }
+                else
+                {
+                    rs1 = registerMap.at(words[1]);
+                    rs2 = registerMap.at(words[2]);
+                    imm = std::atoi(words[3].c_str());
+                }
 
                 i = new Instruction_S(opcode, rs1, rs2, imm);
                 break;
             }
             case B:
             {
-                // Add parsing support storing unstructions Eg: SW rd, offset(rs1), stores rd into memory at rs1 + offset
                 REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
                 REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
                 int32_t imm = std::atoi(words[3].c_str());

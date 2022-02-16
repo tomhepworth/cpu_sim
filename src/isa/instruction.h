@@ -71,6 +71,7 @@ public:
 
     bool decode(Scoreboard *scoreboard);
     bool execute(Scoreboard *scoreboard);
+    bool memoryAccess(Scoreboard *scoreboard);
     bool writeBack(Scoreboard *scoreboard);
 };
 
@@ -79,6 +80,7 @@ class Instruction_S : public Instruction
 {
 protected:
     int32_t rs1Value;
+    int32_t rs2Value;
     int32_t imm;
     int32_t rdValue;
 
@@ -94,9 +96,7 @@ public:
     Instruction_S(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2, int32_t _imm);
     bool decode(Scoreboard *scoreboard);
     bool execute(Scoreboard *scoreboard);
-
-    // bool memory();
-    // bool writeBack();
+    bool memoryAccess(Scoreboard *scoreboard);
 };
 
 // Instruction class for B type instructions like beq, bge etc

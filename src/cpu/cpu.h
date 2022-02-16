@@ -16,7 +16,7 @@ public:
     bool printStages;
     Pipeline();
 
-    void Advance(runnable_program *program, Scoreboard *scoreboard);
+    bool Advance(runnable_program *program, Scoreboard *scoreboard);
 };
 
 class CPU

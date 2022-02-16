@@ -71,6 +71,8 @@ int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)
     int32_t result;
     switch (opcode)
     {
+    case LW: // Loads and stores need to add offset to rs1
+    case SW:
     case ADD:
     case ADDI:
         result = val1 + val2;
