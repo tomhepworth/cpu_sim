@@ -14,12 +14,17 @@ hlt
 
 loop:    
     jeq after
+    j loop
     
 main:
     ..
     ..
     ..
     j loop
+after:
+    ..
+    ..
+    ..
 
 
 

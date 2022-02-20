@@ -13,6 +13,10 @@ Instruction::Instruction()
 // Default implementation for fetch
 bool Instruction::fetch(Scoreboard *scoreboard)
 {
+    // Branch instruction may change the PC, so check that it's not being messed with
+    if (!scoreboard->isValid(PC))
+        return false;
+
     // mark fetch as completed
     free[FETCH] = true;
     return true;
@@ -64,6 +68,14 @@ bool Instruction::writeBack(Scoreboard *scoreboard)
     // Mark this stage as completed so instruction can advance in pipeline
     free[WRITEBACK] = true;
     return true;
+}
+
+void Instruction::reset()
+{
+    for (size_t i = 0; i < STAGE_COUNT; i++)
+    {
+        free[STAGE_COUNT] = false;
+    }
 }
 
 int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)

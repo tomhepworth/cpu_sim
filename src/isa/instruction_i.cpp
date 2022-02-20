@@ -112,3 +112,12 @@ bool Instruction_I::writeBack(Scoreboard *scoreboard)
     free[WRITEBACK] = true;
     return true;
 }
+
+void Instruction_I::reset()
+{
+    for (size_t i = 0; i < STAGE_COUNT; i++)
+    {
+        free[STAGE_COUNT] = false;
+    }
+    gotRs1 = false;
+}

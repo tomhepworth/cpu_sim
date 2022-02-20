@@ -16,6 +16,7 @@ int32_t memory[MEMORY_SIZE];
 
 bool running = true; // Global used for dealing with HTL instruction
 bool debug = true;   // global debug
+bool step = false;
 
 int cycles = 0;
 
@@ -74,9 +75,33 @@ int main(int argc, char const *argv[])
     registers[PC] = 0;
     while (running)
     {
+        if (step) // If in step-through mode, wait for stdin
+        {
+            char input;
+            do
+            {
+                std::cout << '\n'
+                          << "Press a key to step...";
+                input = std::cin.get();
+
+                if (input == 'r')
+                    regDump();
+
+                if (input == 'm')
+                    memDump(0, 15);
+
+                if (input == 's')
+                    scoreboard->log();
+
+                if (input == 'c') // continue execution without step mode
+                    step = false;
+
+            } while (input != '\n');
+        }
+
         cycles++;
         cpu.Cycle();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(CPU_SPEED));
     }
 
     printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), registers[T0]);

@@ -19,20 +19,17 @@ bool Instruction_R::decode(Scoreboard *scoreboard)
 
     // Determine if we have the values of rs1 and rs2
     // Lookup in register file, if we can get it, nice
-    if (scoreboard->isValid(rs1))
+    if (scoreboard->isValid(rs1) && scoreboard->isValid(rs2))
     {
         rs1Value = registers[rs1];
         gotRs1 = true;
-    }
 
-    if (scoreboard->isValid(rs2))
-    {
         rs2Value = registers[rs2];
         gotRs2 = true;
-    }
 
-    // Ready to execute so set rd to be invalid in scoreboard (!!!)
-    scoreboard->setInvalid(rd);
+        // Ready to execute so set rd to be invalid in scoreboard (!!!)
+        scoreboard->setInvalid(rd);
+    }
 
     // Only mark that we are free to advance in pipeline if we have everything we need to do so
     if (gotRs1 && gotRs2)
@@ -77,4 +74,14 @@ bool Instruction_R::writeBack(Scoreboard *scoreboard)
     // Mark we are complete in the writeback phase
     free[WRITEBACK] = true;
     return true;
+}
+
+void Instruction_R::reset()
+{
+    for (size_t i = 0; i < STAGE_COUNT; i++)
+    {
+        free[STAGE_COUNT] = false;
+    }
+    gotRs1 = false;
+    gotRs2 = false;
 }

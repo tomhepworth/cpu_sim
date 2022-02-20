@@ -17,6 +17,10 @@ enum OPCODE
     ADDI,
     LW,
     SW,
+    BEQ,
+    BNE,
+    BLT,
+    BGE,
     HLT,
 };
 

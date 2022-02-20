@@ -71,3 +71,13 @@ bool Instruction_S::memoryAccess(Scoreboard *scoreboard)
     free[MEMORY] = true;
     return true;
 }
+
+void Instruction_S::reset()
+{
+    for (size_t i = 0; i < STAGE_COUNT; i++)
+    {
+        free[STAGE_COUNT] = false;
+    }
+    gotRs1 = false;
+    gotRs2 = false;
+}

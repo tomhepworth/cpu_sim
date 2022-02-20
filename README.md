@@ -8,7 +8,7 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 
 -   [x] Parser supporting basic instruction format
 -   [x] Parser supporting offset syntax
--   [ ] Parser supporting branching and labels
+-   [ ] Parser supporting branching and labels which can calculate addresses for relative branching
 -   [ ] Parser supporting variables
 
 ## ISA Implementation
@@ -22,8 +22,17 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 
 -   [x] Scalar pipeline using a simple scoreboard
 -   [ ] More complicated scoreboard https://en.wikipedia.org/wiki/Scoreboarding
+-   [ ] Instructions which can take multiple cycles within a pipeline stage - required for OoO.
 -   [ ] Out of order pipeline
 -   [ ] Superscalar pipeline
+
+## Refactor
+
+-   [ ] Simulate hardware modules with F/D/E/M/WB **units** - this should hopefully make superscalar pipelines easier to implement.
+    -   [ ] Refactor pipeline logic to be much less messy
+    -   [ ] Use instruction memory better so that instructions dont have to be reset
+-   [ ] Move scoreboard checkint outside the instruction classes and into the pipeline
+-   [ ] CPU runprogram() function separate from main, with an event handler for debug IO, eg regdump() on 'r' key.
 
 ## Nice to haves:
 

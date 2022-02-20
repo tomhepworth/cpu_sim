@@ -24,7 +24,12 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
             // If instruction has finished its stage, shift it to the next stage in pipeline
             if (program->at(stageIndexes[i - 1])->free[i - 1])
             {
-                // stageIndexes[i - 1] = -1;
+                if (i == 4 && stageIndexes[i] > 0)
+                {
+                    // IF inst is leaving pipeline, reset it
+                    program->at(stageIndexes[i])->reset();
+                }
+
                 stageIndexes[i] = stageIndexes[i - 1];
                 continue;
             }
@@ -37,13 +42,28 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
         }
         else
         {
+            if (i == 4 && stageIndexes[i] > 0)
+            {
+                // IF inst is leaving pipeline, reset it
+                program->at(stageIndexes[i])->reset();
+            }
+
             stageIndexes[i] = stageIndexes[i - 1];
         }
     }
 
     // If pipeline wasnt frozen, update instruction to be fetched
     if (!piplineFrozen)
-        stageIndexes[FETCH] = registers[PC];
+    {
+        if (scoreboard->isValid(PC))
+        {
+            stageIndexes[FETCH] = registers[PC];
+        }
+        else
+        {
+            stageIndexes[FETCH] = -1;
+        }
+    }
 
     // Debug
     if (printStages || debug)
@@ -65,21 +85,20 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
         Probably could make this more efficient
     */
     bool didFetch = true, didDecode = true, didExec = true, didMem = true, didWB = true;
-
-    if (stageIndexes[FETCH] >= 0)
-        didFetch = program->at(stageIndexes[FETCH])->fetch(scoreboard);
-
-    if (stageIndexes[DECODE] >= 0)
-        didDecode = program->at(stageIndexes[DECODE])->decode(scoreboard);
-
-    if (stageIndexes[EXECUTE] >= 0)
-        didExec = program->at(stageIndexes[EXECUTE])->execute(scoreboard);
+    if (stageIndexes[WRITEBACK] >= 0)
+        didWB = program->at(stageIndexes[WRITEBACK])->writeBack(scoreboard);
 
     if (stageIndexes[MEMORY] >= 0)
         didMem = program->at(stageIndexes[MEMORY])->memoryAccess(scoreboard);
 
-    if (stageIndexes[WRITEBACK] >= 0)
-        didWB = program->at(stageIndexes[WRITEBACK])->writeBack(scoreboard);
+    if (stageIndexes[EXECUTE] >= 0)
+        didExec = program->at(stageIndexes[EXECUTE])->execute(scoreboard);
+
+    if (stageIndexes[DECODE] >= 0)
+        didDecode = program->at(stageIndexes[DECODE])->decode(scoreboard);
+
+    if (stageIndexes[FETCH] >= 0)
+        didFetch = program->at(stageIndexes[FETCH])->fetch(scoreboard);
 
     if (debug)
     {

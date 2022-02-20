@@ -4,6 +4,7 @@
 #include "main.h"
 #include "isa.h"
 #include "scoreboard.h"
+#include <string>
 
 // Base instruction class
 class Instruction
@@ -13,14 +14,18 @@ protected:
 public:
     OPCODE opcode;
 
+    std::string labelToReplace; // If the instruction contained a label that hadnt been seen yet, keep a reference off it so any relative addressing can be computed once the label is found
+
     bool free[STAGE_COUNT] = {false}; // Indicates if instruction is able to advance to the next phase
 
     Instruction();
+
     virtual bool fetch(Scoreboard *scoreboard);
     virtual bool decode(Scoreboard *scoreboard);
     virtual bool execute(Scoreboard *scoreboard);
     virtual bool memoryAccess(Scoreboard *scoreboard);
     virtual bool writeBack(Scoreboard *scoreboard);
+    virtual void reset();
 };
 
 // Instruction class for R type instructions like add, sub etc
@@ -49,6 +54,8 @@ public:
     // Dont think R-type does anything here
     // bool memory();
     bool writeBack(Scoreboard *scoreboard);
+
+    void reset();
 };
 
 // Instruction class for I type instructions like addi, lb etc
@@ -73,6 +80,7 @@ public:
     bool execute(Scoreboard *scoreboard);
     bool memoryAccess(Scoreboard *scoreboard);
     bool writeBack(Scoreboard *scoreboard);
+    void reset();
 };
 
 // Instruction class for S type instructions like sw sb etc
@@ -97,6 +105,7 @@ public:
     bool decode(Scoreboard *scoreboard);
     bool execute(Scoreboard *scoreboard);
     bool memoryAccess(Scoreboard *scoreboard);
+    void reset();
 };
 
 // Instruction class for B type instructions like beq, bge etc
@@ -104,6 +113,7 @@ class Instruction_B : public Instruction
 {
 protected:
     int32_t rs1Value;
+    int32_t rs2Value;
     int32_t imm;
     int32_t rdValue;
 
@@ -117,8 +127,15 @@ public:
     REGISTER_ABI_NAME rd;
 
     Instruction_B(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2, int32_t _imm);
+
+    bool fetch(Scoreboard *scoreboard);
     bool decode(Scoreboard *scoreboard);
     bool execute(Scoreboard *scoreboard);
+    bool writeBack(Scoreboard *scoreboard);
+    void reset();
+
+    void setImm(int32_t _imm);
+    int32_t getImm();
 
     // bool memory();
     // bool writeBack();
