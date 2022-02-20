@@ -11,20 +11,3 @@ sw t1, 4(sp)
 lw t3, 4(sp)
 
 hlt
-
-loop:    
-    jeq after
-    j loop
-    
-main:
-    ..
-    ..
-    ..
-    j loop
-after:
-    ..
-    ..
-    ..
-
-
-

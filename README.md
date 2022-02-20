@@ -8,7 +8,7 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 
 -   [x] Parser supporting basic instruction format
 -   [x] Parser supporting offset syntax
--   [ ] Parser supporting branching and labels which can calculate addresses for relative branching
+-   [x] Parser supporting branching and labels which can calculate addresses for relative branching
 -   [ ] Parser supporting variables
 
 ## ISA Implementation
@@ -32,13 +32,15 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
     -   [ ] Refactor pipeline logic to be much less messy
     -   [ ] Use instruction memory better so that instructions dont have to be reset
 -   [ ] Move scoreboard checkint outside the instruction classes and into the pipeline
--   [ ] CPU runprogram() function separate from main, with an event handler for debug IO, eg regdump() on 'r' key.
+-   [ ] CPU runprogram() function separate from main, with an event handler for debug IO, eg regdump() on 'r' key. Will also allow better unit testing
+-   [ ] Clean up print statements and move any I want to keep into debug mode
 
 ## Nice to haves:
 
 -   [ ] Refactor instruction structure to store instructions in memory
 -   [ ] Support risc-v pseudoinstructions
 -   [ ] Implement all RV32I base instructions
+-   [ ] Unit testing
 
 # References
 
