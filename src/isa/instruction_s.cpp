@@ -6,7 +6,7 @@
 Instruction_S::Instruction_S(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2, int32_t _imm)
 {
     opcode = _opcode;
-    rs1 = _rs2;
+    rs2 = _rs2;
     rs1 = _rs1;
     imm = _imm;
 }
@@ -24,6 +24,8 @@ bool Instruction_S::decode(Scoreboard *scoreboard)
         // Set RD to invalid so that it is reserved for this instruction to use
         rs1Value = registers[rs1];
         rs2Value = registers[rs2];
+
+        printf("S: RS1: %d\tRs2: %d      .... RS2 reg: %d \n", rs1Value, rs2Value, rs2);
 
         gotRs1 = true;
         gotRs2 = true;
@@ -48,8 +50,8 @@ bool Instruction_S::execute(Scoreboard *scoreboard)
     assert(gotRs1 && gotRs2);
 
     // Add offset to rs1; TODO: maybe rename to "accumulator" something, since it's not actually used for rd
-    printf("OPCODE : %d, RS2 %d, IMM %d\n", opcode, rs2, imm);
     rdValue = PerformALUOperation(opcode, rs2Value, imm);
+    printf("OPCODE : %d, RS2V %d, IMM %d, RES %d\n", opcode, rs2Value, imm, rdValue);
 
     // Mark that we are free to advance in pipeline
     free[EXECUTE] = true;
@@ -76,7 +78,7 @@ void Instruction_S::reset()
 {
     for (size_t i = 0; i < STAGE_COUNT; i++)
     {
-        free[STAGE_COUNT] = false;
+        free[i] = false;
     }
     gotRs1 = false;
     gotRs2 = false;

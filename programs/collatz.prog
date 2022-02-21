@@ -1,0 +1,51 @@
+// https://en.wikipedia.org/wiki/Collatz_conjecture
+// For input n, if n is even replace with n/2, if odd replace with 3n + 1. This should converge to 1.
+// The program should repeat this until 1 is reached, storing the result at each iteration.
+// The number of iterations should be stored after.
+
+// Starting n
+addi t0, x0, 3
+
+// use t1 as a counter to count the iterations, and also as a memory offset
+addi t1, x0, 0
+
+// We need the value 1 a lot so store it in a reg
+addi t3, x0, 1
+
+loop:
+//store current iteration and increment counter
+sw t0, t1, 0
+addi t1, t1, 1
+
+// logical AND with 1 to check last bit of current value
+and t2, t3, t0
+
+// branch if this bit was 0 (even)
+beq t2, x0, even
+
+//Compute 3n + 1 and save in t0
+odd:
+
+//copy value of t0 to T6
+add t6, x0, t0
+
+//Use it to mul t0 by 3 by doubling then adding t6
+add t0, t0, t0
+add t0, t0, t6
+
+//Then add 1
+addi t0, t0, 1
+
+beq x0, x0, check_end
+
+//Compute n / 2 and save in t0
+even:
+srl t0, t0, t3
+
+// Compare with 1, continue looping if not converget to 1
+check_end:
+bne t0, t3, loop
+
+// if the sequence has ended, save current value (should be 1) and halt
+sw t0, t1, 0
+hlt

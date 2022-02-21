@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 
 Pipeline::Pipeline()
 {
@@ -15,7 +16,7 @@ Pipeline::Pipeline()
 bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
 {
 
-    // Shift all elements one place right and set FETCH to PC value
+    // // Shift all elements one place right and set FETCH to PC value
     bool piplineFrozen = false;
     for (int i = STAGE_COUNT; i >= 1; i--)
     {
@@ -27,14 +28,18 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
                 if (i == 4 && stageIndexes[i] > 0)
                 {
                     // IF inst is leaving pipeline, reset it
+                    // printf("Instruction %d leaving pipeline\n", i);
                     program->at(stageIndexes[i])->reset();
                 }
 
+                // printf("Swapping %d to %d's position\n", i, i - 1);
                 stageIndexes[i] = stageIndexes[i - 1];
                 continue;
             }
             else // If it hadn't finished the stage, freeze the pipeline behind it
             {
+
+                // printf("Freezing pipe, setting position %d to empty\n", i);
                 stageIndexes[i] = -1; // -1 indicates no instruction is in this stage
                 piplineFrozen = true;
                 break;
@@ -45,12 +50,52 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
             if (i == 4 && stageIndexes[i] > 0)
             {
                 // IF inst is leaving pipeline, reset it
+                // printf("Instruction %d leaving pipeline\n", program->at(stageIndexes[i])->linenum);
                 program->at(stageIndexes[i])->reset();
             }
 
+            // printf("Swapping empty position\n");
             stageIndexes[i] = stageIndexes[i - 1];
         }
     }
+
+    // // Shift along pipeline
+    // for (int stage_index = WRITEBACK; stage_index != FETCH; stage_index--)
+    // {
+    //     CPU_STAGE stage = static_cast<CPU_STAGE>(stage_index);
+    //     bool swap = false;
+
+    //     // Just to stop segfault of doing program.at(-1)
+    //     if (!(stageIndexes[stage] < 0))
+    //     {
+    //         // If this unit has finished with its current instruction
+    //         if (program->at(stageIndexes[stage])->free[stage])
+    //         {
+    //             // Reset and move it out of pipeline
+    //             if (stage == WRITEBACK)
+    //                 program->at(stageIndexes[WRITEBACK])->reset();
+
+    //             // IF previous stage had finished too then move it into this slot
+    //             if (program->at(stageIndexes[stage - 1])->free[stage - 1])
+    //             {
+    //                 swap = true;
+    //             }
+    //             else // Otherwise default to -1 to show the unit is empty
+    //             {
+    //                 stageIndexes[stage] = -1;
+    //             }
+    //         }
+    //     }
+
+    //     if (swap)
+    //         stageIndexes[stage] = stageIndexes[stage - 1];
+    // }
+
+    // if (!(stageIndexes[FETCH] < 0) && !(stageIndexes[DECODE] < 0))
+    // {
+    //     if (!(program->at(stageIndexes[FETCH])->free[FETCH] && program->at(stageIndexes[DECODE])->free[DECODE]))
+    //         piplineFrozen = true;
+    // }
 
     // If pipeline wasnt frozen, update instruction to be fetched
     if (!piplineFrozen)
@@ -66,25 +111,21 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
     }
 
     // Debug
-    if (printStages || debug)
+    if (debug)
     {
-        std::cout
-            << "---------------------------------------------------------" << std::endl;
-        std::cout << "\t\t\tF\tD\tE\tM\tW" << std::endl;
-        std::cout << "INSTR ADDR:\t\t" << stageIndexes[FETCH] << "\t" << stageIndexes[DECODE] << "\t" << stageIndexes[EXECUTE] << "\t" << stageIndexes[MEMORY] << "\t" << stageIndexes[WRITEBACK] << std::endl;
-        std::cout << "PC IS:" << registers[PC] << " size: " << program->size() << std::endl;
-        std::cout << "OPCODE EXECUTING:\t"
-                  << ((stageIndexes[FETCH] >= 0) ? program->at(stageIndexes[FETCH])->opcode : 0)
-                  << "\t" << ((stageIndexes[DECODE] >= 0) ? program->at(stageIndexes[DECODE])->opcode : 0)
-                  << "\t" << ((stageIndexes[EXECUTE] >= 0) ? program->at(stageIndexes[EXECUTE])->opcode : 0)
-                  << "\t" << ((stageIndexes[MEMORY] >= 0) ? program->at(stageIndexes[MEMORY])->opcode : 0)
-                  << "\t" << ((stageIndexes[WRITEBACK] >= 0) ? program->at(stageIndexes[WRITEBACK])->opcode : 0) << std::endl;
+        std::cout << "PC:\t" << registers[PC] << std::endl;
+        std::cout << "F:\t" << std::to_string(stageIndexes[FETCH]) << "\t" << ((stageIndexes[FETCH] < 0) ? "unit empty" : program->at(stageIndexes[FETCH])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[FETCH])->linenum)) << std::endl;
+        std::cout << "D:\t" << std::to_string(stageIndexes[DECODE]) << "\t" << ((stageIndexes[DECODE] < 0) ? "unit empty" : program->at(stageIndexes[DECODE])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[DECODE])->linenum)) << std::endl;
+        std::cout << "E:\t" << std::to_string(stageIndexes[EXECUTE]) << "\t" << ((stageIndexes[EXECUTE] < 0) ? "unit empty" : program->at(stageIndexes[EXECUTE])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[EXECUTE])->linenum)) << std::endl;
+        std::cout << "M:\t" << std::to_string(stageIndexes[MEMORY]) << "\t" << ((stageIndexes[MEMORY] < 0) ? "unit empty" : program->at(stageIndexes[MEMORY])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[MEMORY])->linenum)) << std::endl;
+        std::cout << "W:\t" << std::to_string(stageIndexes[WRITEBACK]) << "\t" << ((stageIndexes[WRITEBACK] < 0) ? "unit empty" : program->at(stageIndexes[WRITEBACK])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[WRITEBACK])->linenum)) << std::endl;
     }
 
     /*
         Probably could make this more efficient
     */
-    bool didFetch = true, didDecode = true, didExec = true, didMem = true, didWB = true;
+    bool didFetch = true,
+         didDecode = true, didExec = true, didMem = true, didWB = true;
     if (stageIndexes[WRITEBACK] >= 0)
         didWB = program->at(stageIndexes[WRITEBACK])->writeBack(scoreboard);
 
@@ -103,15 +144,15 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
     if (debug)
     {
         if (!didFetch)
-            std::cout << "Couldnt Fetch" << std::endl;
+            std::cout << "Couldnt Fetch " << std::to_string(program->at(stageIndexes[FETCH])->linenum) << std::endl;
         if (!didDecode)
-            std::cout << "Couldnt Decode" << std::endl;
+            std::cout << "Couldnt Decode " << std::to_string(program->at(stageIndexes[DECODE])->linenum) << std::endl;
         if (!didExec)
-            std::cout << "Couldnt Execute" << std::endl;
+            std::cout << "Couldnt Execute " << std::to_string(program->at(stageIndexes[EXECUTE])->linenum) << std::endl;
         if (!didMem)
-            std::cout << "Couldnt Memory Access" << std::endl;
+            std::cout << "Couldnt Memory Access " << std::to_string(program->at(stageIndexes[MEMORY])->linenum) << std::endl;
         if (!didWB)
-            std::cout << "Couldnt Write Back" << std::endl;
+            std::cout << "Couldnt Write Back " << std::to_string(program->at(stageIndexes[WRITEBACK])->linenum) << std::endl;
 
         // scoreboard->log();
     }
@@ -150,6 +191,9 @@ void CPU::LoadProgram(runnable_program *prog)
 
 void CPU::Cycle()
 {
+    if (debug)
+        std::cout << "----------- Cylcle #" << cycles << "-----------" << std::endl;
+
     assert(running);
 
     // If the program counter value is greater than the size of the program, just send NOP forever
@@ -164,9 +208,14 @@ void CPU::Cycle()
 
     // If the pipeline advanced we can move the pc along
     if (pipelineAdvanced)
+    {
         // Increment PC
         registers[PC]++;
-
+    }
+    // else
+    // {
+    //     std::cout << "not incing pc" << std::endl;
+    // }
     // Increment cycle count
     cycles++;
 

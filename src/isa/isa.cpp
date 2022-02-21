@@ -2,12 +2,18 @@
 #include <stdio.h>
 #include "main.h"
 #include "cpu.h"
+#include <iostream>
 
 int32_t registers[REG_UNUSED]; // extern in isa.h
 
 Instruction::Instruction()
 {
     opcode = NOP;
+}
+
+Instruction::~Instruction()
+{
+    delete[] free;
 }
 
 // Default implementation for fetch
@@ -74,9 +80,20 @@ void Instruction::reset()
 {
     for (size_t i = 0; i < STAGE_COUNT; i++)
     {
-        free[STAGE_COUNT] = false;
+        free[i] = false;
     }
 }
+
+// void Instruction::setImm(int32_t _imm)
+// {
+//     printf("Warning: setImm not implemented for base instruction class\n");
+// }
+
+// int32_t Instruction::getImm()
+// {
+//     printf("Warning: getImm not implemented for base instruction class\n");
+//     return 0;
+// }
 
 int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)
 {
@@ -91,6 +108,22 @@ int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)
         break;
     case SUB:
         result = val1 - val2;
+        break;
+    case SLL:
+        result = val1 << val2;
+        break;
+    case SRL:
+        result = val1 >> val2;
+        break;
+    case AND:
+        result = val1 & val2;
+        printf("ANDING %d and %d for RES: %d\n", val1, val2, result);
+        break;
+    case OR:
+        result = val1 | val2;
+        break;
+    case XOR:
+        result = val1 ^ val2;
         break;
     default:
         break;

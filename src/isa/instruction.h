@@ -12,7 +12,9 @@ class Instruction
 private:
 protected:
 public:
+    int linenum;
     OPCODE opcode;
+    std::string rawText;
 
     std::string labelToReplace; // If the instruction contained a label that hadnt been seen yet, keep a reference off it so any relative addressing can be computed once the label is found
 
@@ -20,12 +22,15 @@ public:
 
     Instruction();
 
+    virtual ~Instruction();
     virtual bool fetch(Scoreboard *scoreboard);
     virtual bool decode(Scoreboard *scoreboard);
     virtual bool execute(Scoreboard *scoreboard);
     virtual bool memoryAccess(Scoreboard *scoreboard);
     virtual bool writeBack(Scoreboard *scoreboard);
     virtual void reset();
+    // virtual void setImm(int32_t _imm);
+    // virtual int32_t getImm();
 };
 
 // Instruction class for R type instructions like add, sub etc
@@ -148,6 +153,7 @@ public:
     Instruction_Halt();
 
     // HLT instruction will get all the way to the end of the pipeline then mark running as false
+    bool fetch(Scoreboard *scoreboard);
     bool writeBack(Scoreboard *scoreboard);
 };
 

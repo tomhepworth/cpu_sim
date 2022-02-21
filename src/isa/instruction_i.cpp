@@ -4,6 +4,7 @@
 #include "scoreboard.h"
 
 #include "stdio.h"
+#include <iostream>
 
 Instruction_I::Instruction_I(OPCODE _opcode, REGISTER_ABI_NAME _rd, REGISTER_ABI_NAME _rs1, int32_t _imm)
 {
@@ -21,6 +22,7 @@ bool Instruction_I::decode(Scoreboard *scoreboard)
 
     // Determine if we have the value of rs1
     // Lookup in scoreboard, if we can get it, nice
+
     if (scoreboard->isValid(rs1) && scoreboard->isValid(rd))
     {
         // Set RD to invalid so that it is reserved for this instruction to use
@@ -51,8 +53,8 @@ bool Instruction_I::execute(Scoreboard *scoreboard)
     // Now do the ALU operation
     rdValue = PerformALUOperation(opcode, rs1Value, imm);
 
-    if (debug)
-        printf("LW: Setting rd (%d) to %d %d\n", rd, rdValue, imm);
+    // if (debug)
+    //     printf("LW: Setting rd (%d) to %d %d\n", rd, rdValue, imm);
 
     // Mark that we are free to advance in pipeline
     free[EXECUTE] = true;
@@ -117,7 +119,7 @@ void Instruction_I::reset()
 {
     for (size_t i = 0; i < STAGE_COUNT; i++)
     {
-        free[STAGE_COUNT] = false;
+        free[i] = false;
     }
     gotRs1 = false;
 }

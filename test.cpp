@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <vector>
 
 class BaseClass
 {
@@ -44,7 +45,12 @@ class GrandchildClass : public ChildClass
 {
 private:
 public:
-    GrandchildClass(){};
+    int extraAttribute;
+
+    GrandchildClass()
+    {
+        extraAttribute = 9999;
+    };
 
     void doThing();
     void PassToGrandChild();
@@ -59,6 +65,27 @@ void GrandchildClass::doThing()
 {
     printf("Grandchild class version did thing\n");
 }
+
+void iterateOverVectorOfPointers(std::vector<BaseClass *> *vec)
+{
+    for (auto &&i : *vec)
+    {
+        i->doThing();
+    }
+}
+
+void iterateOverVectorOfPointersWithDynamicCasting(std::vector<BaseClass *> *vec)
+{
+    for (auto &&i : *vec)
+    {
+        auto p = dynamic_cast<GrandchildClass *>(i);
+        if (p != nullptr)
+        {
+            printf("Filtered out the grandchild %d\n", p->extraAttribute);
+        }
+    }
+}
+
 int main(int argc, char const *argv[])
 {
     BaseClass *test = new GrandchildClass();
@@ -74,5 +101,21 @@ int main(int argc, char const *argv[])
     test2->doThing();
     test3->doThing();
 
+    printf("=============================================\n");
+
+    std::vector<BaseClass *> testvec;
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        BaseClass *x;
+        x = new ChildClass();
+        testvec.push_back(x);
+    }
+
+    testvec.push_back(test);
+
+    iterateOverVectorOfPointers(&testvec);
+    printf("=============================================\n");
+    iterateOverVectorOfPointersWithDynamicCasting(&testvec);
     return 0;
 }

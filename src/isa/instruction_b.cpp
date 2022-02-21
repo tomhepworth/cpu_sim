@@ -59,7 +59,7 @@ bool Instruction_B::decode(Scoreboard *scoreboard)
     if (scoreboard->isValid(rs1) && scoreboard->isValid(rs2))
     {
         // scoreboard->setInvalid(PC); // Set pc invalid as
-        std::cout << "DECODED BRANCH: uses regs " << rs1 << " and " << rs2 << std::endl;
+        // std::cout << "DECODED BRANCH: uses regs " << rs1 << " and " << rs2 << std::endl;
         rs1Value = registers[rs1];
         rs2Value = registers[rs2];
         gotRs1 = true;
@@ -109,7 +109,7 @@ bool Instruction_B::writeBack(Scoreboard *scoreboard)
     if (!free[MEMORY])
         return false;
 
-    std::cout << "SETTING PC TO " << rdValue << std::endl;
+    // std::cout << "SETTING PC TO " << rdValue << std::endl;
     registers[PC] = rdValue - 1;
 
     scoreboard->setValid(PC);
@@ -123,7 +123,7 @@ void Instruction_B::reset()
 {
     for (size_t i = 0; i < STAGE_COUNT; i++)
     {
-        free[STAGE_COUNT] = false;
+        free[i] = false;
     }
     gotRs1 = false;
     gotRs2 = false;

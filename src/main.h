@@ -3,8 +3,7 @@
 
 #include <inttypes.h>
 
-#define CPU_SPEED 200
-
+extern int cpu_speed;
 extern bool running;
 extern bool debug;
 extern bool step;

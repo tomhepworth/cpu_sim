@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <getopt.h>
 
 #include "parser.h"
 #include <string>
@@ -12,11 +13,14 @@
 
 #define MEMORY_SIZE 65536 // Memory size in WORDS
 
-int32_t memory[MEMORY_SIZE];
+extern char *optarg;
+extern int optind, opterr, optopt;
 
-bool running = true; // Global used for dealing with HTL instruction
-bool debug = true;   // global debug
-bool step = false;
+int32_t memory[MEMORY_SIZE];
+bool running = true; // Global used for dealing with HLT instruction
+bool debug = false;  // global debug
+bool step = false;   // stepthrough mode
+int cpu_speed = 10;  // default 10ms delay between cycles;
 
 int cycles = 0;
 
@@ -40,15 +44,34 @@ void memDump(int start, int end)
     std::cout << "---------------------------------" << std::endl;
 }
 
-int main(int argc, char const *argv[])
+int main(int argc, char *const argv[])
 {
-    if (argc < 2)
+    // Handle command line arguments
+    int opt;
+    std::string filename;
+    while ((opt = getopt(argc, argv, "-:s:dt")) != -1)
     {
-        printf("Enter path to a program\n");
-        return 0;
+        switch (opt)
+        {
+        case 1:
+            printf("Path: %s\n", optarg);
+            filename = optarg;
+            break;
+        case 's':
+            printf("Speed: %s\n", optarg);
+            cpu_speed = atoi(optarg);
+            break;
+        case 'd':
+            printf("Debug Enabled\n");
+            debug = true;
+            break;
+        case 't':
+            printf("Step mode enabled\n");
+            step = true;
+        }
     }
 
-    std::string filename = argv[1];
+    // Parse
     printf("Parsing: %s\n", filename.c_str());
     runnable_program program;
 
@@ -101,7 +124,7 @@ int main(int argc, char const *argv[])
 
         cycles++;
         cpu.Cycle();
-        std::this_thread::sleep_for(std::chrono::milliseconds(CPU_SPEED));
+        std::this_thread::sleep_for(std::chrono::milliseconds(cpu_speed));
     }
 
     printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), registers[T0]);

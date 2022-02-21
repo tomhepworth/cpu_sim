@@ -13,7 +13,6 @@ private:
     int stageIndexes[STAGE_COUNT];
 
 public:
-    bool printStages;
     Pipeline();
 
     bool Advance(runnable_program *program, Scoreboard *scoreboard);

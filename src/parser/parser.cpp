@@ -9,6 +9,11 @@
 std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap = {
     {"add", std::make_pair(ADD, R)},
     {"sub", std::make_pair(SUB, R)},
+    {"sll", std::make_pair(SLL, R)},
+    {"srl", std::make_pair(SRL, R)},
+    {"and", std::make_pair(AND, R)},
+    {"or", std::make_pair(OR, R)},
+    {"xor", std::make_pair(XOR, R)},
     {"addi", std::make_pair(ADDI, I)},
     {"sw", std::make_pair(SW, S)},
     {"lw", std::make_pair(LW, I)},
@@ -73,12 +78,12 @@ bool stringIsNumber(std::string line)
     return *p == 0;
 }
 
-int parseImmediateValue(Instruction *i, std::string imm_str, int instructionNumber)
+bool parseImmediateValue(int32_t *imm, std::string imm_str, int instructionNumber)
 {
-    int32_t imm;
+    bool ret = false;
     if (stringIsNumber(imm_str.c_str()))
     {
-        imm = std::atoi(imm_str.c_str());
+        *imm = std::atoi(imm_str.c_str());
     }
     else
     {
@@ -88,16 +93,16 @@ int parseImmediateValue(Instruction *i, std::string imm_str, int instructionNumb
         // Found in the tabel
         if (it != labelTable.end())
         {
-            imm = it->second - instructionNumber; // Set immediate value to relative address
+            *imm = it->second - instructionNumber; // Set immediate value to relative address
+            ret = true;
         }
         else // Not found the label, keep a reference of it so that we can do the relative addressing once we have found it
         {
-            i->labelToReplace = imm_str.c_str();
-            imm = instructionNumber; // Store instruction numeber in imm so that it can be used to calculate the relative address when the label is found
+            *imm = instructionNumber; // Store instruction numeber in imm so that it can be used to calculate the relative address when the label is found
         }
     }
     std::cout << "imm for \"" << imm_str << "\" on Instruction-line " << instructionNumber << " is " << imm << std::endl;
-    return imm;
+    return ret;
 }
 
 bool parse(std::string filename, runnable_program *prog)
@@ -138,20 +143,18 @@ bool parse(std::string filename, runnable_program *prog)
             {
                 std::string labelName = words[0].substr(0, words[0].size() - 1); // Trim off colon eg "label:" -> "label"
                 labelTable.insert(std::make_pair(labelName, instructionNumber)); // Add the address to the map
-                std::cout << "label " << labelName << "   in#" << instructionNumber << std::endl;
+                // std::cout << "label " << labelName << "   in#" << instructionNumber << std::endl;
             }
             else // If line is an insruction parse it here
             {
 
                 // Convert to instruction
-
-                std::cout << "1" << words[0] << std::endl;
                 std::pair<OPCODE, INSTRUCTION_FORMAT> decodedInstruciton = instructionMap.at(words[0]);
-                std::cout << "2" << std::endl;
                 OPCODE opcode = decodedInstruciton.first;
                 INSTRUCTION_FORMAT format = decodedInstruciton.second;
 
                 Instruction *i;
+
                 switch (format)
                 {
                 case R:
@@ -168,6 +171,7 @@ bool parse(std::string filename, runnable_program *prog)
                     REGISTER_ABI_NAME rd;
                     REGISTER_ABI_NAME rs1;
                     int32_t imm;
+                    bool setImm = false;
                     if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
                     {
                         std::string offsetString = "";
@@ -187,16 +191,18 @@ bool parse(std::string filename, runnable_program *prog)
                         }
                         rd = registerMap.at(words[1]);
                         rs1 = registerMap.at(rs1String);
-                        imm = parseImmediateValue(i, offsetString.c_str(), instructionNumber);
+                        setImm = parseImmediateValue(&imm, offsetString.c_str(), instructionNumber);
                     }
                     else
                     {
                         rd = registerMap.at(words[1]);
                         rs1 = registerMap.at(words[2]);
-                        imm = parseImmediateValue(i, words[3].c_str(), instructionNumber);
+                        setImm = parseImmediateValue(&imm, words[3].c_str(), instructionNumber);
                     }
 
                     i = new Instruction_I(opcode, rd, rs1, imm);
+                    if (!setImm)
+                        i->labelToReplace = words[3].c_str();
                     break;
                 }
                 case S:
@@ -204,7 +210,7 @@ bool parse(std::string filename, runnable_program *prog)
                     REGISTER_ABI_NAME rs1;
                     REGISTER_ABI_NAME rs2;
                     int32_t imm;
-
+                    bool setImm = false;
                     // Add parsing support storing instructions Eg: SW rs1, offset(rs2) stores rs1 into memory at rs2 + offset
                     if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
                     {
@@ -226,30 +232,33 @@ bool parse(std::string filename, runnable_program *prog)
 
                         rs1 = registerMap.at(words[1]);
                         rs2 = registerMap.at(rs2String);
-                        imm = parseImmediateValue(i, offsetString.c_str(), instructionNumber);
+                        setImm = parseImmediateValue(&imm, offsetString.c_str(), instructionNumber);
                     }
                     else
                     {
                         rs1 = registerMap.at(words[1]);
                         rs2 = registerMap.at(words[2]);
-                        imm = parseImmediateValue(i, words[3].c_str(), instructionNumber);
+                        setImm = parseImmediateValue(&imm, words[3].c_str(), instructionNumber);
                     }
 
                     i = new Instruction_S(opcode, rs1, rs2, imm);
+                    if (!setImm)
+                        i->labelToReplace = words[3].c_str();
                     break;
                 }
                 case B:
                 {
-                    std::cout << "a" << std::endl;
                     REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
                     REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
+                    int32_t imm;
 
-                    std::cout << "b" << std::endl;
-                    int32_t imm = parseImmediateValue(i, words[3], instructionNumber);
+                    bool setImm = parseImmediateValue(&imm, words[3], instructionNumber);
 
-                    std::cout << "c" << std::endl;
+                    std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
 
                     i = new Instruction_B(opcode, rs1, rs2, imm);
+                    if (!setImm)
+                        i->labelToReplace = words[3].c_str();
                     break;
                 }
                 case SPECIAL:
@@ -271,6 +280,8 @@ bool parse(std::string filename, runnable_program *prog)
                     break;
                 }
 
+                i->rawText = line;
+                i->linenum = lineNumber;
                 prog->push_back(i);
                 instructionNumber++;
             }
@@ -287,19 +298,22 @@ bool parse(std::string filename, runnable_program *prog)
 
     /*  Now iterate over any instructions that used labels that weren't found
         at the time they were parsed, and update them */
-    for (Instruction *i : *prog)
+    for (auto &&i : *prog)
     {
-        if (i->labelToReplace != "")
+        std::cout << "casting: " << i->labelToReplace << std::endl;
+        auto x = dynamic_cast<Instruction_B *>(i); // Will return nullptr if i isn't an Instruction_B
+        if (x != nullptr)
         {
-            Instruction_B *x = dynamic_cast<Instruction_B *>(i); // Will return nullptr if i isn't an Instruction_B
-            if (x)
+            if (x->labelToReplace != "")
             {
+                std::cout << "CASTED: " << x->labelToReplace << std::endl;
                 int32_t instructionNumber = x->getImm();
                 std::map<std::string, int>::iterator it = labelTable.find(x->labelToReplace.c_str());
 
                 // Found in the table
                 if (it != labelTable.end())
                 {
+                    std::cout << "Updating label" << x->labelToReplace << std::endl;
                     x->setImm(it->second - instructionNumber); // Set immediate value to relative address
                 }
                 else // Not found the label, keep a reference of it so that we can do the relative addressing once we have found it
@@ -307,6 +321,8 @@ bool parse(std::string filename, runnable_program *prog)
                     std::cout << "REFERENCE TO UNKNOWN LABEL LABEL: " << x->labelToReplace << std::endl;
                 }
             }
+
+            std::cout << "ptr: " << x << std::endl;
         }
     }
 
