@@ -16,7 +16,7 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 -   [x] Basic instructions (eg Add, sub)
 -   [x] Immediate instructions (eg addi)
 -   [x] Memory load/store
--   [ ] Branching instructions
+-   [x] Branching instructions
 
 ## Pipelining
 
@@ -32,15 +32,17 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
     -   [ ] Refactor pipeline logic to be much less messy
     -   [ ] Use instruction memory better so that instructions dont have to be reset
 -   [ ] Move scoreboard checkint outside the instruction classes and into the pipeline
--   [ ] CPU runprogram() function separate from main, with an event handler for debug IO, eg regdump() on 'r' key. Will also allow better unit testing
+-   [x] CPU runprogram() function separate from main
+-   [ ] Event handler for debug IO, eg regdump() on 'r' key. Will also allow better unit testing
 -   [ ] Clean up print statements and move any I want to keep into debug mode
 
 ## Nice to haves:
 
 -   [ ] Refactor instruction structure to store instructions in memory
--   [ ] Support risc-v pseudoinstructions
+-   [ ] Support pseudoinstructions
 -   [ ] Implement all RV32I base instructions
--   [ ] Unit testing
+-   [x] Unit testing
+-   [ ] ncurses terminal interface
 
 # References
 
