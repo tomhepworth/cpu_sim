@@ -147,12 +147,12 @@ enum INSTRUCTION_FORMAT
     INSTRUCTION_FORMAT_COUNT // unused
 };
 
-extern int32_t registers[REG_UNUSED];
-
 // This function models all the ALU operations as generally as I can (IE, adds are all combined)
 int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2);
 
-// This function models all the ALU operations as generally as I can (IE, adds are all combined)
 int PerformMemoryOperation(OPCODE opcode, memory_address destination, int32_t value);
+
+// Used for branching insturctions' execute stage
+bool checkCondition(OPCODE opcode, int32_t rs1Value, int32_t rs2Value);
 
 #endif

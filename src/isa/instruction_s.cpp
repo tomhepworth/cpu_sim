@@ -1,6 +1,6 @@
 #include "isa.h"
 #include "instruction.h"
-#include "scoreboard.h"
+#include "cpu.h"
 #include "stdio.h"
 
 Instruction_S::Instruction_S(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2, int32_t _imm)
@@ -11,7 +11,7 @@ Instruction_S::Instruction_S(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_AB
     imm = _imm;
 }
 
-bool Instruction_S::decode(Scoreboard *scoreboard)
+bool Instruction_S::decode(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction is not fetched, we cant decode
     if (!free[FETCH])
@@ -22,8 +22,8 @@ bool Instruction_S::decode(Scoreboard *scoreboard)
     if (scoreboard->isValid(rs1) && scoreboard->isValid(rs2))
     {
         // Set RD to invalid so that it is reserved for this instruction to use
-        rs1Value = registers[rs1];
-        rs2Value = registers[rs2];
+        rs1Value = cpu->registers[rs1];
+        rs2Value = cpu->registers[rs2];
 
         printf("S: RS1: %d\tRs2: %d      .... RS2 reg: %d \n", rs1Value, rs2Value, rs2);
 
@@ -41,7 +41,7 @@ bool Instruction_S::decode(Scoreboard *scoreboard)
     return false; // Default;
 }
 
-bool Instruction_S::execute(Scoreboard *scoreboard)
+bool Instruction_S::execute(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction is not decoded, we cant execute;
     if (!free[DECODE])
@@ -59,7 +59,7 @@ bool Instruction_S::execute(Scoreboard *scoreboard)
     return true;
 }
 
-bool Instruction_S::memoryAccess(Scoreboard *scoreboard)
+bool Instruction_S::memoryAccess(CPU *cpu, Scoreboard *scoreboard)
 {
     // If previous pipeline stage not completed we cant do this one
     if (!free[EXECUTE])
@@ -67,7 +67,7 @@ bool Instruction_S::memoryAccess(Scoreboard *scoreboard)
 
     // Store rs1 value into memory at rs2 + imm
     printf("storing %d in mem[%d]\n", rs1Value, rdValue);
-    memory[rdValue] = rs1Value;
+    cpu->memory[rdValue] = rs1Value;
 
     // Mark this stage as completed so instruction can advance in pipeline
     free[MEMORY] = true;

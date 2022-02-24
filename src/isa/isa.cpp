@@ -1,6 +1,5 @@
 #include "isa.h"
 #include <stdio.h>
-#include "main.h"
 #include "cpu.h"
 #include <iostream>
 
@@ -17,7 +16,7 @@ Instruction::~Instruction()
 }
 
 // Default implementation for fetch
-bool Instruction::fetch(Scoreboard *scoreboard)
+bool Instruction::fetch(CPU *cpu, Scoreboard *scoreboard)
 {
     // Branch instruction may change the PC, so check that it's not being messed with
     if (!scoreboard->isValid(PC))
@@ -29,7 +28,7 @@ bool Instruction::fetch(Scoreboard *scoreboard)
 }
 
 // Default implementation for decode
-bool Instruction::decode(Scoreboard *scoreboard)
+bool Instruction::decode(CPU *cpu, Scoreboard *scoreboard)
 {
     // If previous pipeline stage not completed we cant do this one
     if (!free[FETCH])
@@ -41,7 +40,7 @@ bool Instruction::decode(Scoreboard *scoreboard)
 }
 
 // Default implementation for execute
-bool Instruction::execute(Scoreboard *scoreboard)
+bool Instruction::execute(CPU *cpu, Scoreboard *scoreboard)
 {
     // If previous pipeline stage not completed we cant do this one
     if (!free[DECODE])
@@ -53,7 +52,7 @@ bool Instruction::execute(Scoreboard *scoreboard)
 }
 
 // Default implementation for memoryAccess
-bool Instruction::memoryAccess(Scoreboard *scoreboard)
+bool Instruction::memoryAccess(CPU *cpu, Scoreboard *scoreboard)
 {
     // If previous pipeline stage not completed we cant do this one
     if (!free[EXECUTE])
@@ -65,7 +64,7 @@ bool Instruction::memoryAccess(Scoreboard *scoreboard)
 }
 
 // Default implementation for writeBack
-bool Instruction::writeBack(Scoreboard *scoreboard)
+bool Instruction::writeBack(CPU *cpu, Scoreboard *scoreboard)
 {
     // If previous pipeline stage not completed we cant do this one
     if (!free[MEMORY])

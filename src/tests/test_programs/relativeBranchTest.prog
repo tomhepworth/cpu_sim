@@ -1,0 +1,21 @@
+addi t0, x0, 5
+addi t1, x0, 5
+
+//Should go straight to testlabel_eq
+nop
+nop
+nop
+beq t0, t1, testlabel_eq
+nop
+nop
+nop
+nop
+//Should not happen
+addi t0, x0, 999
+nop
+nop
+nop
+nop
+
+testlabel_eq:
+hlt

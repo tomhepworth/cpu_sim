@@ -2,14 +2,18 @@
 #define SCOREBOARD_H
 
 #include "isa.h"
+
 class Scoreboard
 {
 public:
+    Scoreboard(){};
+    ~Scoreboard(){};
+
     virtual bool isValid(REGISTER_ABI_NAME reg);
 
-    virtual void setValid(REGISTER_ABI_NAME reg) {}
+    virtual void setValid(REGISTER_ABI_NAME reg){};
 
-    virtual void setInvalid(REGISTER_ABI_NAME reg) {}
+    virtual void setInvalid(REGISTER_ABI_NAME reg){};
 
     virtual void log();
 };

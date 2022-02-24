@@ -1,6 +1,7 @@
-#include "isa.h"
 #include "instruction.h"
+#include "isa.h"
 #include "scoreboard.h"
+#include "cpu.h"
 
 #include <iostream>
 
@@ -33,7 +34,7 @@ Instruction_B::Instruction_B(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_AB
     imm = _imm;
 }
 
-bool Instruction_B::fetch(Scoreboard *scoreboard)
+bool Instruction_B::fetch(CPU *cpu, Scoreboard *scoreboard)
 {
     // Branch instruction may change the PC, so check that it's not being messed with
     if (!scoreboard->isValid(PC))
@@ -48,7 +49,7 @@ bool Instruction_B::fetch(Scoreboard *scoreboard)
     return true;
 }
 
-bool Instruction_B::decode(Scoreboard *scoreboard)
+bool Instruction_B::decode(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction is not fetched, we cant decode
     if (!free[FETCH])
@@ -60,8 +61,8 @@ bool Instruction_B::decode(Scoreboard *scoreboard)
     {
         // scoreboard->setInvalid(PC); // Set pc invalid as
         // std::cout << "DECODED BRANCH: uses regs " << rs1 << " and " << rs2 << std::endl;
-        rs1Value = registers[rs1];
-        rs2Value = registers[rs2];
+        rs1Value = cpu->registers[rs1];
+        rs2Value = cpu->registers[rs2];
         gotRs1 = true;
         gotRs2 = true;
     }
@@ -77,7 +78,7 @@ bool Instruction_B::decode(Scoreboard *scoreboard)
     return false; // Default;
 }
 
-bool Instruction_B::execute(Scoreboard *scoreboard)
+bool Instruction_B::execute(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction is not decoded, we cant execute;
     if (!free[DECODE])
@@ -89,13 +90,13 @@ bool Instruction_B::execute(Scoreboard *scoreboard)
     std::cout << "COMPARING " << rs1Value << " with " << rs2Value << std::endl;
     if (checkCondition(opcode, rs1Value, rs2Value))
     {
-        rdValue = registers[PC] + imm - 2;
+        rdValue = cpu->registers[PC] + imm - 2;
         std::cout << "Taking branch " << rdValue << std::endl;
     }
     else
     {
         std::cout << "Not taking branch " << std::endl;
-        rdValue = registers[PC] - 1;
+        rdValue = cpu->registers[PC] - 1;
     }
 
     // Mark that we are free to advance in pipeline
@@ -103,14 +104,14 @@ bool Instruction_B::execute(Scoreboard *scoreboard)
     return true;
 }
 
-bool Instruction_B::writeBack(Scoreboard *scoreboard)
+bool Instruction_B::writeBack(CPU *cpu, Scoreboard *scoreboard)
 {
     // If previous pipeline stage not completed we cant do this one
     if (!free[MEMORY])
         return false;
 
     // std::cout << "SETTING PC TO " << rdValue << std::endl;
-    registers[PC] = rdValue - 1;
+    cpu->registers[PC] = rdValue - 1;
 
     scoreboard->setValid(PC);
 

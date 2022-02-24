@@ -14,4 +14,7 @@ extern std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionM
 
 bool parse(std::string filename, runnable_program *prog);
 
+bool stringIsNumber(std::string line);
+bool parseImmediateValue(int32_t *imm, std::string imm_str, int instructionNumber);
+
 #endif

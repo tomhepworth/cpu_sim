@@ -1,6 +1,7 @@
 #include "isa.h"
 #include "instruction.h"
 #include "scoreboard.h"
+#include "cpu.h"
 #include "stdio.h"
 #include <iostream>
 
@@ -12,7 +13,7 @@ Instruction_R::Instruction_R(OPCODE _opcode, REGISTER_ABI_NAME _rd, REGISTER_ABI
     rs2 = _rs2;
 }
 
-bool Instruction_R::decode(Scoreboard *scoreboard)
+bool Instruction_R::decode(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction is not fetched, we cant decode
     if (!free[FETCH])
@@ -23,10 +24,10 @@ bool Instruction_R::decode(Scoreboard *scoreboard)
     if (scoreboard->isValid(rs1) && scoreboard->isValid(rs2))
     {
         printf("Setting GOTs for %d\n", linenum);
-        rs1Value = registers[rs1];
+        rs1Value = cpu->registers[rs1];
         gotRs1 = true;
 
-        rs2Value = registers[rs2];
+        rs2Value = cpu->registers[rs2];
         gotRs2 = true;
 
         // Ready to execute so set rd to be invalid in scoreboard (!!!)
@@ -43,7 +44,7 @@ bool Instruction_R::decode(Scoreboard *scoreboard)
     return false; // Default;
 }
 
-bool Instruction_R::execute(Scoreboard *scoreboard)
+bool Instruction_R::execute(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction is not decoded, we cant execute;
     if (!free[DECODE])
@@ -62,7 +63,7 @@ bool Instruction_R::execute(Scoreboard *scoreboard)
     return true;
 }
 
-bool Instruction_R::writeBack(Scoreboard *scoreboard)
+bool Instruction_R::writeBack(CPU *cpu, Scoreboard *scoreboard)
 {
     // If the instruction has completed the memory stage
     if (!free[MEMORY])
@@ -71,7 +72,7 @@ bool Instruction_R::writeBack(Scoreboard *scoreboard)
     assert(free[MEMORY]);
 
     // Write rdValue to result register, handling scoreboard stuff
-    registers[rd] = rdValue;
+    cpu->registers[rd] = rdValue;
     rdWritten = true;
 
     scoreboard->setValid(rd); // mark are done with rd

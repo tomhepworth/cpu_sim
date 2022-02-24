@@ -1,0 +1,22 @@
+// Compute x*y - on 20/2/22 this took 56 cycles
+
+// Load x and y to registers
+addi t0, x0, 5
+addi t1, x0, 7
+
+//Multiply
+mul:
+//t2 will contain the counter
+addi t2, t0, 0
+//While counter not zero: accumulate, and decrement counter
+mul_loop:
+add t3, t3, t1
+addi t2, t2, -1
+bne t2, x0, mul_loop
+
+//store result in memory
+sw t3, 0(sp)
+
+//Done
+hlt
+

@@ -1,55 +1,33 @@
-#include "isa.h"
-#include <stdio.h>
-#include <iostream>
-#include <chrono>
-#include <thread>
-#include <getopt.h>
 
-#include "parser.h"
+// We shouldnt build this in test mode as tests will have their own main()
+#ifndef TEST_MODE
+
 #include <string>
+#include <getopt.h>
+#include <stdio.h>
 #include "main.h"
 #include "isa.h"
+#include "parser.h"
 #include "cpu.h"
+#include "scoreboard.h"
 
-#define MEMORY_SIZE 65536 // Memory size in WORDS
+#include "debug_utils.h"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
 
-int32_t memory[MEMORY_SIZE];
-bool running = true; // Global used for dealing with HLT instruction
-bool debug = false;  // global debug
-bool step = false;   // stepthrough mode
-int cpu_speed = 10;  // default 10ms delay between cycles;
-
-int cycles = 0;
-
-void regDump()
-{
-    std::cout << "------------REG-DUMP-------------" << std::endl;
-    for (size_t i = 0; i < REGABI_UNUSED; i++)
-    {
-        std::cout << i << ":\t" << registers[i] << std::endl;
-    }
-    std::cout << "---------------------------------" << std::endl;
-}
-
-void memDump(int start, int end)
-{
-    std::cout << "------------MEM-DUMP-------------" << std::endl;
-    for (size_t i = start; i <= end; i++)
-    {
-        std::cout << "0x" << i << ":\t" << memory[i] << std::endl;
-    }
-    std::cout << "---------------------------------" << std::endl;
-}
+bool debug = false; // global debug
+bool step = false;  // stepthrough mode
 
 int main(int argc, char *const argv[])
 {
     // Handle command line arguments
+    int cpu_speed;
+    int memSize = 512;
+
     int opt;
     std::string filename;
-    while ((opt = getopt(argc, argv, "-:s:dt")) != -1)
+    while ((opt = getopt(argc, argv, "-:s:m:dt")) != -1)
     {
         switch (opt)
         {
@@ -60,6 +38,10 @@ int main(int argc, char *const argv[])
         case 's':
             printf("Speed: %s\n", optarg);
             cpu_speed = atoi(optarg);
+            break;
+        case 'm':
+            printf("Memory Size: %s\n", optarg);
+            memSize = atoi(optarg);
             break;
         case 'd':
             printf("Debug Enabled\n");
@@ -73,30 +55,31 @@ int main(int argc, char *const argv[])
 
     // Parse
     printf("Parsing: %s\n", filename.c_str());
-    runnable_program program;
+    runnable_program *program = new runnable_program;
 
-    bool parsingSuccess = parse(filename, &program);
+    bool parsingSuccess = parse(filename, program);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);
     }
 
-    Pipeline pipeline = Pipeline();
+    Pipeline *pipeline = new Pipeline();
     Scoreboard *scoreboard = new SimpleScoreboard();
 
-    CPU cpu = CPU(&pipeline, scoreboard);
+    CPU cpu = CPU(pipeline, scoreboard, memSize, cpu_speed);
 
-    cpu.LoadProgram(&program);
+    cpu.LoadProgram(program);
 
     if (debug)
     {
+        printf("CPU Memory size is : %d\n", cpu.getMemorySize());
         printf("Using debug settings\n");
     }
 
     printf("Running...\n");
 
-    registers[PC] = 0;
-    while (running)
+    cpu.registers[PC] = 0;
+    while (cpu.running)
     {
         if (step) // If in step-through mode, wait for stdin
         {
@@ -108,10 +91,10 @@ int main(int argc, char *const argv[])
                 input = std::cin.get();
 
                 if (input == 'r')
-                    regDump();
+                    cpu.regDump();
 
                 if (input == 'm')
-                    memDump(0, 15);
+                    cpu.memDump(0, 15);
 
                 if (input == 's')
                     scoreboard->log();
@@ -122,15 +105,16 @@ int main(int argc, char *const argv[])
             } while (input != '\n');
         }
 
-        cycles++;
+        cpu.cycles++;
         cpu.Cycle();
-        std::this_thread::sleep_for(std::chrono::milliseconds(cpu_speed));
     }
 
-    printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), registers[T0]);
+    printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), cpu.registers[T0]);
 
-    regDump();
-    memDump(0, 10);
+    cpu.regDump();
+    cpu.memDump(0, cpu.getMemorySize());
 
     return 0;
 }
+
+#endif // ifndef TEST_MODE

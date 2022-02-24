@@ -1,8 +1,14 @@
 #include "cpu.h"
 
+#ifndef TEST_MODE
+#include "debug_utils.h"
+#endif
+
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <chrono>
+#include <thread>
 
 Pipeline::Pipeline()
 {
@@ -13,7 +19,7 @@ Pipeline::Pipeline()
     }
 }
 
-bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
+bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard)
 {
 
     // // Shift all elements one place right and set FETCH to PC value
@@ -102,7 +108,7 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
     {
         if (scoreboard->isValid(PC))
         {
-            stageIndexes[FETCH] = registers[PC];
+            stageIndexes[FETCH] = cpu->registers[PC];
         }
         else
         {
@@ -110,16 +116,17 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
         }
     }
 
-    // Debug
+#ifndef TEST_MODE
     if (debug)
     {
-        std::cout << "PC:\t" << registers[PC] << std::endl;
+        std::cout << "PC:\t" << cpu->registers[PC] << std::endl;
         std::cout << "F:\t" << std::to_string(stageIndexes[FETCH]) << "\t" << ((stageIndexes[FETCH] < 0) ? "unit empty" : program->at(stageIndexes[FETCH])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[FETCH])->linenum)) << std::endl;
         std::cout << "D:\t" << std::to_string(stageIndexes[DECODE]) << "\t" << ((stageIndexes[DECODE] < 0) ? "unit empty" : program->at(stageIndexes[DECODE])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[DECODE])->linenum)) << std::endl;
         std::cout << "E:\t" << std::to_string(stageIndexes[EXECUTE]) << "\t" << ((stageIndexes[EXECUTE] < 0) ? "unit empty" : program->at(stageIndexes[EXECUTE])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[EXECUTE])->linenum)) << std::endl;
         std::cout << "M:\t" << std::to_string(stageIndexes[MEMORY]) << "\t" << ((stageIndexes[MEMORY] < 0) ? "unit empty" : program->at(stageIndexes[MEMORY])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[MEMORY])->linenum)) << std::endl;
         std::cout << "W:\t" << std::to_string(stageIndexes[WRITEBACK]) << "\t" << ((stageIndexes[WRITEBACK] < 0) ? "unit empty" : program->at(stageIndexes[WRITEBACK])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[WRITEBACK])->linenum)) << std::endl;
     }
+#endif
 
     /*
         Probably could make this more efficient
@@ -127,20 +134,21 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
     bool didFetch = true,
          didDecode = true, didExec = true, didMem = true, didWB = true;
     if (stageIndexes[WRITEBACK] >= 0)
-        didWB = program->at(stageIndexes[WRITEBACK])->writeBack(scoreboard);
+        didWB = program->at(stageIndexes[WRITEBACK])->writeBack(cpu, scoreboard);
 
     if (stageIndexes[MEMORY] >= 0)
-        didMem = program->at(stageIndexes[MEMORY])->memoryAccess(scoreboard);
+        didMem = program->at(stageIndexes[MEMORY])->memoryAccess(cpu, scoreboard);
 
     if (stageIndexes[EXECUTE] >= 0)
-        didExec = program->at(stageIndexes[EXECUTE])->execute(scoreboard);
+        didExec = program->at(stageIndexes[EXECUTE])->execute(cpu, scoreboard);
 
     if (stageIndexes[DECODE] >= 0)
-        didDecode = program->at(stageIndexes[DECODE])->decode(scoreboard);
+        didDecode = program->at(stageIndexes[DECODE])->decode(cpu, scoreboard);
 
     if (stageIndexes[FETCH] >= 0)
-        didFetch = program->at(stageIndexes[FETCH])->fetch(scoreboard);
+        didFetch = program->at(stageIndexes[FETCH])->fetch(cpu, scoreboard);
 
+#ifndef TEST_MODE
     if (debug)
     {
         if (!didFetch)
@@ -153,9 +161,8 @@ bool Pipeline::Advance(runnable_program *program, Scoreboard *scoreboard)
             std::cout << "Couldnt Memory Access " << std::to_string(program->at(stageIndexes[MEMORY])->linenum) << std::endl;
         if (!didWB)
             std::cout << "Couldnt Write Back " << std::to_string(program->at(stageIndexes[WRITEBACK])->linenum) << std::endl;
-
-        // scoreboard->log();
     }
+#endif
 
     return !piplineFrozen;
 }
@@ -165,13 +172,21 @@ CPU::CPU()
     cycles = 0;
     pipeline = new Pipeline();
     scoreboard = new Scoreboard();
+    memorySize = 512;
+    memory = (int32_t *)calloc(memorySize, sizeof(int32_t));
+    speed = 10;
+    running = true;
 }
 
-CPU::CPU(Pipeline *_pipeline, Scoreboard *_scoreboard)
+CPU::CPU(Pipeline *_pipeline, Scoreboard *_scoreboard, int _memorySize, int _speed)
 {
     cycles = 0;
     pipeline = _pipeline;
     scoreboard = _scoreboard;
+    memorySize = _memorySize;
+    memory = (int32_t *)calloc(memorySize, sizeof(int32_t));
+    registers = (int32_t *)calloc(REG_UNUSED, sizeof(int32_t));
+    speed = _speed;
 }
 
 void CPU::LoadProgram(runnable_program *prog)
@@ -191,8 +206,11 @@ void CPU::LoadProgram(runnable_program *prog)
 
 void CPU::Cycle()
 {
+
+#ifndef TEST_MODE
     if (debug)
         std::cout << "----------- Cylcle #" << cycles << "-----------" << std::endl;
+#endif
 
     assert(running);
 
@@ -204,7 +222,7 @@ void CPU::Cycle()
     }
 
     // Advance the pipeline
-    bool pipelineAdvanced = pipeline->Advance(program, scoreboard);
+    bool pipelineAdvanced = pipeline->Advance(this, program, scoreboard);
 
     // If the pipeline advanced we can move the pc along
     if (pipelineAdvanced)
@@ -219,9 +237,36 @@ void CPU::Cycle()
     // Increment cycle count
     cycles++;
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(speed));
+
     // Fetch - CPU reads instructions from the address in the memory whose value is present in the program counter
     // Decode - instruction is decoded and the register file is accessed to get the values from the registers used in the instruction.
     // Execute - ALU operations are performed.
     // Memory Access - memory operands are read and written from/to the memory that is present in the instruction.
     // Write Back - computed / fetched value is written back to the register present in the instructions.
+}
+
+void CPU::regDump()
+{
+    std::cout << "------------REG-DUMP-------------" << std::endl;
+    for (size_t i = 0; i < REGABI_UNUSED; i++)
+    {
+        std::cout << i << ":\t" << registers[i] << std::endl;
+    }
+    std::cout << "---------------------------------" << std::endl;
+}
+
+void CPU::memDump(int start, int end)
+{
+    std::cout << "------------MEM-DUMP-------------" << std::endl;
+    for (size_t i = start; i <= end; i++)
+    {
+        std::cout << "0x" << i << ":\t" << memory[i] << std::endl;
+    }
+    std::cout << "---------------------------------" << std::endl;
+}
+
+int CPU::getMemorySize()
+{
+    return memorySize;
 }

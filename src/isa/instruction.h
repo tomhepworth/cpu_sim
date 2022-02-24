@@ -1,10 +1,15 @@
 #ifndef INSTRUCTION_H
 #define INSTRUCTION_H
 
-#include "main.h"
-#include "isa.h"
-#include "scoreboard.h"
 #include <string>
+
+#include "isa.h"
+// #include "cpu.h"
+// #include "scoreboard.h"
+
+// forward declaration
+class CPU;
+class Scoreboard;
 
 // Base instruction class
 class Instruction
@@ -23,11 +28,11 @@ public:
     Instruction();
 
     virtual ~Instruction();
-    virtual bool fetch(Scoreboard *scoreboard);
-    virtual bool decode(Scoreboard *scoreboard);
-    virtual bool execute(Scoreboard *scoreboard);
-    virtual bool memoryAccess(Scoreboard *scoreboard);
-    virtual bool writeBack(Scoreboard *scoreboard);
+    virtual bool fetch(CPU *cpu, Scoreboard *scoreboard);
+    virtual bool decode(CPU *cpu, Scoreboard *scoreboard);
+    virtual bool execute(CPU *cpu, Scoreboard *scoreboard);
+    virtual bool memoryAccess(CPU *cpu, Scoreboard *scoreboard);
+    virtual bool writeBack(CPU *cpu, Scoreboard *scoreboard);
     virtual void reset();
     // virtual void setImm(int32_t _imm);
     // virtual int32_t getImm();
@@ -52,13 +57,13 @@ public:
 
     Instruction_R(OPCODE _opcode, REGISTER_ABI_NAME _rd, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2);
 
-    bool decode(Scoreboard *scoreboard);
+    bool decode(CPU *cpu, Scoreboard *scoreboard);
 
-    bool execute(Scoreboard *scoreboard);
+    bool execute(CPU *cpu, Scoreboard *scoreboard);
 
     // Dont think R-type does anything here
     // bool memory();
-    bool writeBack(Scoreboard *scoreboard);
+    bool writeBack(CPU *cpu, Scoreboard *scoreboard);
 
     void reset();
 };
@@ -81,10 +86,10 @@ public:
 
     Instruction_I(OPCODE _opcode, REGISTER_ABI_NAME _rd, REGISTER_ABI_NAME _rs1, int32_t _imm);
 
-    bool decode(Scoreboard *scoreboard);
-    bool execute(Scoreboard *scoreboard);
-    bool memoryAccess(Scoreboard *scoreboard);
-    bool writeBack(Scoreboard *scoreboard);
+    bool decode(CPU *cpu, Scoreboard *scoreboard);
+    bool execute(CPU *cpu, Scoreboard *scoreboard);
+    bool memoryAccess(CPU *cpu, Scoreboard *scoreboard);
+    bool writeBack(CPU *cpu, Scoreboard *scoreboard);
     void reset();
 };
 
@@ -107,9 +112,9 @@ public:
     REGISTER_ABI_NAME rd;
 
     Instruction_S(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2, int32_t _imm);
-    bool decode(Scoreboard *scoreboard);
-    bool execute(Scoreboard *scoreboard);
-    bool memoryAccess(Scoreboard *scoreboard);
+    bool decode(CPU *cpu, Scoreboard *scoreboard);
+    bool execute(CPU *cpu, Scoreboard *scoreboard);
+    bool memoryAccess(CPU *cpu, Scoreboard *scoreboard);
     void reset();
 };
 
@@ -133,10 +138,10 @@ public:
 
     Instruction_B(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_ABI_NAME _rs2, int32_t _imm);
 
-    bool fetch(Scoreboard *scoreboard);
-    bool decode(Scoreboard *scoreboard);
-    bool execute(Scoreboard *scoreboard);
-    bool writeBack(Scoreboard *scoreboard);
+    bool fetch(CPU *cpu, Scoreboard *scoreboard);
+    bool decode(CPU *cpu, Scoreboard *scoreboard);
+    bool execute(CPU *cpu, Scoreboard *scoreboard);
+    bool writeBack(CPU *cpu, Scoreboard *scoreboard);
     void reset();
 
     void setImm(int32_t _imm);
@@ -153,8 +158,8 @@ public:
     Instruction_Halt();
 
     // HLT instruction will get all the way to the end of the pipeline then mark running as false
-    bool fetch(Scoreboard *scoreboard);
-    bool writeBack(Scoreboard *scoreboard);
+    bool fetch(CPU *cpu, Scoreboard *scoreboard);
+    bool writeBack(CPU *cpu, Scoreboard *scoreboard);
 };
 
 #endif

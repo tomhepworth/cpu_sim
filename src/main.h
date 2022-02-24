@@ -3,10 +3,8 @@
 
 #include <inttypes.h>
 
-extern int cpu_speed;
-extern bool running;
-extern bool debug;
+#ifndef TEST_MODE
 extern bool step;
-extern int32_t memory[];
+#endif
 
 #endif

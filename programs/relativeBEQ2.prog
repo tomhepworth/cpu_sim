@@ -1,6 +1,0 @@
-beq x0, x0, gohere
-nop
-addi t0, x0, 5
-nop
-gohere:
-hlt

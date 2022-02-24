@@ -3,8 +3,9 @@
 
 #include <string>
 #include <iostream>
+
+#include "cpu.h"
 #include "parser.h"
-#include "isa.h"
 #include "scoreboard.h"
 
 class Pipeline
@@ -15,20 +16,27 @@ private:
 public:
     Pipeline();
 
-    bool Advance(runnable_program *program, Scoreboard *scoreboard);
+    bool Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard);
 };
 
 class CPU
 {
 private:
-    int cycles;
     Pipeline *pipeline;
     Scoreboard *scoreboard;
     runnable_program *program;
 
+    int memorySize;
+    int speed;
+
 public:
     CPU();
-    CPU(Pipeline *_pipeline, Scoreboard *_scoreboard);
+    CPU(Pipeline *_pipeline, Scoreboard *_scoreboard, int _memorySize, int _speed);
+
+    int cycles;
+    bool running;
+    int32_t *registers;
+    int32_t *memory;
 
     void LoadProgram(runnable_program *prog);
     void Cycle();
@@ -37,6 +45,11 @@ public:
     {
         return cycles;
     }
+
+    void regDump();
+    void memDump(int start, int end);
+
+    int getMemorySize();
 };
 
 #endif

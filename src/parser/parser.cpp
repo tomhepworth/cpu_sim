@@ -1,10 +1,12 @@
-#include "parser.h"
-#include "isa.h"
 #include <stdio.h>
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <instruction.h>
+#include <map>
+#include <vector>
+
+#include "parser.h"
+#include "instruction.h"
 
 std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap = {
     {"add", std::make_pair(ADD, R)},
@@ -300,29 +302,29 @@ bool parse(std::string filename, runnable_program *prog)
         at the time they were parsed, and update them */
     for (auto &&i : *prog)
     {
-        std::cout << "casting: " << i->labelToReplace << std::endl;
+        // std::cout << "casting: " << i->labelToReplace << std::endl;
         auto x = dynamic_cast<Instruction_B *>(i); // Will return nullptr if i isn't an Instruction_B
         if (x != nullptr)
         {
             if (x->labelToReplace != "")
             {
-                std::cout << "CASTED: " << x->labelToReplace << std::endl;
+                // std::cout << "CASTED: " << x->labelToReplace << std::endl;
                 int32_t instructionNumber = x->getImm();
                 std::map<std::string, int>::iterator it = labelTable.find(x->labelToReplace.c_str());
 
                 // Found in the table
                 if (it != labelTable.end())
                 {
-                    std::cout << "Updating label" << x->labelToReplace << std::endl;
+                    // std::cout << "Updating label" << x->labelToReplace << std::endl;
                     x->setImm(it->second - instructionNumber); // Set immediate value to relative address
                 }
                 else // Not found the label, keep a reference of it so that we can do the relative addressing once we have found it
                 {
-                    std::cout << "REFERENCE TO UNKNOWN LABEL LABEL: " << x->labelToReplace << std::endl;
+                    // std::cout << "REFERENCE TO UNKNOWN LABEL LABEL: " << x->labelToReplace << std::endl;
                 }
             }
 
-            std::cout << "ptr: " << x << std::endl;
+            // std::cout << "ptr: " << x << std::endl;
         }
     }
 

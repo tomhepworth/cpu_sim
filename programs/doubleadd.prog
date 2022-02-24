@@ -1,4 +1,0 @@
-addi t0, x0, 5
-add t0, t0, t0
-add t0, t0, t0
-hlt

@@ -1,33 +1,54 @@
 COMPILER := g++
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -std=c++11
 SOURCE_DIR := src
-INCLUDES := $(SUBDIR_INCLUDES)
 BUILD_DIR := build
-VPATH = src src/parser/ src/isa/ src/cpu/
+TEST_LIBS := src/libs/catch/
+VPATH = src/ src/parser/ src/isa/ src/cpu/ src/tests/ src/debug/
 
-# CPP_SRCS := $(shell find $(SOURCE_DIR) -name \*.h -print -o -name \*.cpp -print)
-CPP_SRCS := $(shell find $(SOURCE_DIR)/ -name \*.cpp -print)
-# CPP_HEADERS := $(shell find $(SOURCE_DIR)/ -name \*.h -print)
-CPP_OBJS := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir $(CPP_SRCS)))
+#cppclean --include-path=src/ --include-path=src/parser/ --include-path=src/isa/ --include-path=src/cpu/ --include-path=src/tests/ --include-path=src/debug/ .
+
+CPP_SRCS := $(shell find $(SOURCE_DIR)/ -name \*.cpp ! -name "main.cpp" ! -path "$(SOURCE_DIR)/tests/*" -print)
+CPP_TESTS := $(shell find $(SOURCE_DIR)/tests/ -name \*.cpp -print)
+CPP_OBJS := $(patsubst %.cpp, %.o, $(notdir $(CPP_SRCS)))
+CPP_TEST_OBJS := $(patsubst %.cpp, %.o, $(notdir $(CPP_TESTS)))
 
 HEADER_INCLUDES = $(addprefix -I, $(VPATH))
 
-all: dir simulator
+.PHONY: all sim test run simulator tests dir clean
+
+all: dir simulator test
+sim: dir simulator
+test: dir tests
 
 run: all
+	./test
 	./simulator
 
-simulator: $(CPP_OBJS)
-	$(COMPILER) $(CFLAGS) -o $@ $^ 
+# Set build dir and build simulator
+simulator: BUILD_DIR = build/sim
+simulator: $(CPP_OBJS) main.o
+	$(COMPILER) $(CFLAGS) -o $@ $(addprefix $(BUILD_DIR)/, $^)
 
-$(BUILD_DIR)/%.o: %.cpp
-	@echo $@
-	$(COMPILER) -c $(CFLAGS) $< -o $@ $(HEADER_INCLUDES)
 
+# For building tests include testing library (catch2), add flags for test mode, and set build output directory
+tests: HEADER_INCLUDES += -Isrc/libs/catch/
+tests: CFLAGS += -DTEST_MODE
+tests: BUILD_DIR = build/test
+tests: $(CPP_OBJS) $(CPP_TEST_OBJS)
+	$(COMPILER) $(CFLAGS) -o test $(addprefix $(BUILD_DIR)/, $^) -I$(TEST_LIBS)
+
+
+# Build object files from cpp files
+%.o: %.cpp
+	$(COMPILER) -c $(CFLAGS) $< -o $(BUILD_DIR)/$@ $(HEADER_INCLUDES)
+
+# Make the output directories
 dir:	
 	@echo $(CPP_SRCS)
 	@echo $(CPP_OBJS)
 	mkdir -p build
+	mkdir -p build/sim
+	mkdir -p build/test
 
 clean:
 	rm -rf $(BUILD_DIR)

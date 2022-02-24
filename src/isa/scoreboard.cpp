@@ -1,5 +1,4 @@
 #include "scoreboard.h"
-#include "isa.h"
 #include <iostream>
 
 bool Scoreboard::isValid(REGISTER_ABI_NAME reg)
