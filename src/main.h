@@ -3,8 +3,4 @@
 
 #include <inttypes.h>
 
-#ifndef TEST_MODE
-extern bool step;
-#endif
-
 #endif

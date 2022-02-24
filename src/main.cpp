@@ -1,7 +1,5 @@
 
 // We shouldnt build this in test mode as tests will have their own main()
-#ifndef TEST_MODE
-
 #include <string>
 #include <getopt.h>
 #include <stdio.h>
@@ -10,14 +8,10 @@
 #include "parser.h"
 #include "cpu.h"
 #include "scoreboard.h"
-
 #include "debug_utils.h"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
-
-bool debug = false; // global debug
-bool step = false;  // stepthrough mode
 
 int main(int argc, char *const argv[])
 {
@@ -116,5 +110,3 @@ int main(int argc, char *const argv[])
 
     return 0;
 }
-
-#endif // ifndef TEST_MODE

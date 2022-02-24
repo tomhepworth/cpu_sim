@@ -49,3 +49,7 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 -   Unit lectures/notes
 -   https://github.com/jameslzhu/riscv-card/blob/master/riscv-card.pdf
 -   https://www.cl.cam.ac.uk/teaching/1617/ECAD+Arch/files/docs/RISCVGreenCardv8-20151013.pdf
+
+# Libraries used:
+
+-   Catch2 (unit tests): https://github.com/catchorg/Catch2

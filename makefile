@@ -9,7 +9,7 @@ VPATH = src/ src/parser/ src/isa/ src/cpu/ src/tests/ src/debug/
 
 CPP_SRCS := $(shell find $(SOURCE_DIR)/ -name \*.cpp ! -name "main.cpp" ! -path "$(SOURCE_DIR)/tests/*" -print)
 CPP_TESTS := $(shell find $(SOURCE_DIR)/tests/ -name \*.cpp -print)
-CPP_OBJS := $(patsubst %.cpp, %.o, $(notdir $(CPP_SRCS)))
+CPP_OBJS := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir $(CPP_SRCS)))
 CPP_TEST_OBJS := $(patsubst %.cpp, %.o, $(notdir $(CPP_TESTS)))
 
 HEADER_INCLUDES = $(addprefix -I, $(VPATH))
@@ -25,27 +25,25 @@ run: all
 	./simulator
 
 # Set build dir and build simulator
-simulator: BUILD_DIR = build/sim
-simulator: $(CPP_OBJS) main.o
-	$(COMPILER) $(CFLAGS) -o $@ $(addprefix $(BUILD_DIR)/, $^)
+simulator: $(CPP_OBJS) $(BUILD_DIR)/main.o
+	$(COMPILER) $(CFLAGS) -o $@ $^
 
 
 # For building tests include testing library (catch2), add flags for test mode, and set build output directory
 tests: HEADER_INCLUDES += -Isrc/libs/catch/
-tests: CFLAGS += -DTEST_MODE
-tests: BUILD_DIR = build/test
-tests: $(CPP_OBJS) $(CPP_TEST_OBJS)
-	$(COMPILER) $(CFLAGS) -o test $(addprefix $(BUILD_DIR)/, $^) -I$(TEST_LIBS)
+tests: $(CPP_OBJS) $(BUILD_DIR)/test.o
+	$(COMPILER) $(CFLAGS) -o test $^ $(HEADER_INCLUDES)
 
 
 # Build object files from cpp files
-%.o: %.cpp
-	$(COMPILER) -c $(CFLAGS) $< -o $(BUILD_DIR)/$@ $(HEADER_INCLUDES)
+$(BUILD_DIR)/%.o: %.cpp
+	$(COMPILER) -c $(CFLAGS) $< -o $@ $(HEADER_INCLUDES)
 
 # Make the output directories
 dir:	
 	@echo $(CPP_SRCS)
 	@echo $(CPP_OBJS)
+
 	mkdir -p build
 	mkdir -p build/sim
 	mkdir -p build/test
@@ -53,5 +51,6 @@ dir:
 clean:
 	rm -rf $(BUILD_DIR)
 	rm simulator
+	rm test
 
 # -include $(CPP_OBJS:.o=.d)

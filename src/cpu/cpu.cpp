@@ -1,8 +1,5 @@
 #include "cpu.h"
-
-#ifndef TEST_MODE
 #include "debug_utils.h"
-#endif
 
 #include <iostream>
 #include <stdlib.h>
@@ -116,7 +113,6 @@ bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboa
         }
     }
 
-#ifndef TEST_MODE
     if (debug)
     {
         std::cout << "PC:\t" << cpu->registers[PC] << std::endl;
@@ -126,7 +122,6 @@ bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboa
         std::cout << "M:\t" << std::to_string(stageIndexes[MEMORY]) << "\t" << ((stageIndexes[MEMORY] < 0) ? "unit empty" : program->at(stageIndexes[MEMORY])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[MEMORY])->linenum)) << std::endl;
         std::cout << "W:\t" << std::to_string(stageIndexes[WRITEBACK]) << "\t" << ((stageIndexes[WRITEBACK] < 0) ? "unit empty" : program->at(stageIndexes[WRITEBACK])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[WRITEBACK])->linenum)) << std::endl;
     }
-#endif
 
     /*
         Probably could make this more efficient
@@ -148,7 +143,6 @@ bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboa
     if (stageIndexes[FETCH] >= 0)
         didFetch = program->at(stageIndexes[FETCH])->fetch(cpu, scoreboard);
 
-#ifndef TEST_MODE
     if (debug)
     {
         if (!didFetch)
@@ -162,7 +156,6 @@ bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboa
         if (!didWB)
             std::cout << "Couldnt Write Back " << std::to_string(program->at(stageIndexes[WRITEBACK])->linenum) << std::endl;
     }
-#endif
 
     return !piplineFrozen;
 }
@@ -207,10 +200,8 @@ void CPU::LoadProgram(runnable_program *prog)
 void CPU::Cycle()
 {
 
-#ifndef TEST_MODE
     if (debug)
         std::cout << "----------- Cylcle #" << cycles << "-----------" << std::endl;
-#endif
 
     assert(running);
 

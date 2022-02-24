@@ -1,7 +1,4 @@
-#ifndef TEST_MODE
 #include "debug_utils.h"
-#endif
-
 #include "isa.h"
 #include "instruction.h"
 #include "scoreboard.h"
@@ -109,10 +106,8 @@ bool Instruction_I::writeBack(CPU *cpu, Scoreboard *scoreboard)
     cpu->registers[rd] = rdValue;
     rdWritten = true;
 
-#ifndef TEST_MODE
     if (debug)
         printf("Setting rd (%d) to %d\n", rd, rdValue);
-#endif
 
     scoreboard->setValid(rd); // mark are done with rd
 
