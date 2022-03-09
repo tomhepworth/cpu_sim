@@ -10,77 +10,9 @@ Instruction::Instruction()
     opcode = NOP;
 }
 
-Instruction::~Instruction()
+void Instruction::printSomething()
 {
-    delete[] free;
-}
-
-// Default implementation for fetch
-bool Instruction::fetch(CPU *cpu, Scoreboard *scoreboard)
-{
-    // Branch instruction may change the PC, so check that it's not being messed with
-    if (!scoreboard->isValid(PC))
-        return false;
-
-    // mark fetch as completed
-    free[FETCH] = true;
-    return true;
-}
-
-// Default implementation for decode
-bool Instruction::decode(CPU *cpu, Scoreboard *scoreboard)
-{
-    // If previous pipeline stage not completed we cant do this one
-    if (!free[FETCH])
-        return false;
-
-    // Mark this stage as completed so instruction can advance in pipeline
-    free[DECODE] = true;
-    return true;
-}
-
-// Default implementation for execute
-bool Instruction::execute(CPU *cpu, Scoreboard *scoreboard)
-{
-    // If previous pipeline stage not completed we cant do this one
-    if (!free[DECODE])
-        return false;
-
-    // Mark this stage as completed so instruction can advance in pipeline
-    free[EXECUTE] = true;
-    return true;
-}
-
-// Default implementation for memoryAccess
-bool Instruction::memoryAccess(CPU *cpu, Scoreboard *scoreboard)
-{
-    // If previous pipeline stage not completed we cant do this one
-    if (!free[EXECUTE])
-        return false;
-
-    // Mark this stage as completed so instruction can advance in pipeline
-    free[MEMORY] = true;
-    return true;
-}
-
-// Default implementation for writeBack
-bool Instruction::writeBack(CPU *cpu, Scoreboard *scoreboard)
-{
-    // If previous pipeline stage not completed we cant do this one
-    if (!free[MEMORY])
-        return false;
-
-    // Mark this stage as completed so instruction can advance in pipeline
-    free[WRITEBACK] = true;
-    return true;
-}
-
-void Instruction::reset()
-{
-    for (size_t i = 0; i < STAGE_COUNT; i++)
-    {
-        free[i] = false;
-    }
+    std::cout << "Something" << std::endl;
 }
 
 // void Instruction::setImm(int32_t _imm)
@@ -94,16 +26,18 @@ void Instruction::reset()
 //     return 0;
 // }
 
-int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)
+int32_t PerformALUOperation(OPCODE opcode, int32_t PC, int32_t val1, int32_t val2, int32_t imm)
 {
     int32_t result;
     switch (opcode)
     {
+    case ADD:
+        result = val1 + val2;
+        break;
     case LW: // Loads and stores need to add offset to rs1
     case SW:
-    case ADD:
     case ADDI:
-        result = val1 + val2;
+        result = val1 + imm;
         break;
     case SUB:
         result = val1 - val2;
@@ -116,7 +50,6 @@ int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)
         break;
     case AND:
         result = val1 & val2;
-        printf("ANDING %d and %d for RES: %d\n", val1, val2, result);
         break;
     case OR:
         result = val1 | val2;
@@ -124,9 +57,48 @@ int PerformALUOperation(OPCODE opcode, int32_t val1, int32_t val2)
     case XOR:
         result = val1 ^ val2;
         break;
+
+    // For branching instructions, check condition and if met compute PC + imm (pc is current instructions pc value)
+    case BEQ:
+        if (val1 == val2)
+            result = PC + imm;
+        break;
+    case BNE:
+        if (val1 != val2)
+            result = PC + imm;
+        break;
+    case BLT:
+        if (val1 < val2)
+            result = PC + imm;
+        break;
+    case BGE:
+        if (val1 >= val2)
+            result = PC + imm;
+        break;
+
     default:
         break;
     }
 
     return result;
+}
+
+int32_t PerformMemoryOperation(CPU *cpu, OPCODE opcode, int32_t address, int32_t value)
+{
+
+    int32_t res;
+    switch (opcode)
+    {
+    case LW:
+        res = cpu->memory[address];
+        break;
+    case SW:
+        cpu->memory[address] = value;
+        res = value;
+        break;
+    default:
+        break;
+    }
+
+    return res;
 }

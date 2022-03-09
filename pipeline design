@@ -1,0 +1,11 @@
+-   Model each state as a "unit"
+-   On pipeline advance, each unit performs its operation and (if complete) tries to pass it to the next unit in the stage. If the current instruction doesnt need the next stage, operand forwarding can "skip" a stage
+-   if it could pass on its data, accept new data or default to doing nothing
+-   if it could not pass on its data then it is stalled, do not accept new data, do not pass on new data
+
+-   Operand forwarding occurs at the execute stage (skip mem stage and write back on next cycle)
+
+INSTRUCION REFACTOR:
+
+-   remove the need for the "free" array. and therefore the need for resetting structions
+-   instruction data should be held in execution unit objects, not the instruction objects
