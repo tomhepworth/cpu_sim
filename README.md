@@ -25,20 +25,22 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 -   [ ] Instructions which can take multiple cycles within a pipeline stage - required for OoO.
 -   [ ] Out of order pipeline
 -   [ ] Superscalar pipeline
+-   [ ] Operand forwarding
 
 ## Refactor
 
--   [ ] Simulate hardware modules with F/D/E/M/WB **units** - this should hopefully make superscalar pipelines easier to implement.
-    -   [ ] Refactor pipeline logic to be much less messy
-    -   [ ] Use instruction memory better so that instructions dont have to be reset
--   [ ] Move scoreboard checkint outside the instruction classes and into the pipeline
+-   [x] Simulate hardware modules with F/D/E/M/WB **units** - this should hopefully make superscalar pipelines easier to implement.
+    -   [x] Refactor pipeline logic to be much less messy
+    -   [x] Use instruction memory better so that instructions dont have to be reset
+-   [x] Proper pipeline flushing
+-   [x] Move scoreboard checkint outside the instruction classes and into the pipeline
 -   [x] CPU runprogram() function separate from main
--   [ ] Event handler for debug IO, eg regdump() on 'r' key. Will also allow better unit testing
--   [ ] Clean up print statements and move any I want to keep into debug mode
+-   [x] Event handler for debug IO, eg regdump() on 'r' key. Will also allow better unit testing
+-   [x] Clean up print statements and move any I want to keep into debug mode
 
 ## Nice to haves:
 
--   [ ] Refactor instruction structure to store instructions in memory
+-   [x] Refactor instruction structure to store instructions in memory
 -   [ ] Support pseudoinstructions
 -   [ ] Implement all RV32I base instructions
 -   [x] Unit testing
