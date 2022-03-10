@@ -9,11 +9,17 @@
 
 Pipeline::Pipeline()
 {
+    triggerFlush = false;
 }
 
 bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard)
 {
     return true;
+}
+
+void Pipeline::flush()
+{
+    // default do nothing
 }
 
 void ScalarPipeline::setCPU(CPU *_cpu)
@@ -34,6 +40,7 @@ ScalarPipeline::ScalarPipeline(CPU *_cpu)
     executeUnit = ExecuteUnit(cpu);
     memoryAccessUnit = MemoryAccessUnit(cpu);
     writebackUnit = WriteBackUnit(cpu);
+    triggerFlush = false;
 }
 
 bool ScalarPipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard)
@@ -80,7 +87,7 @@ bool ScalarPipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *sc
         }
         else
         {
-            memoryAccessUnit.AcceptData(executeUnit.PCValue, executeUnit.opcode, executeUnit.rd, executeUnit.result, executeUnit.requiresWriteBack, executeUnit.requiresMemoryAccess);
+            memoryAccessUnit.AcceptData(executeUnit.PCValue, executeUnit.opcode, executeUnit.rd, executeUnit.result, executeUnit.rs1Value, executeUnit.requiresWriteBack, executeUnit.requiresMemoryAccess);
             executeUnit.setAsEmpty();
         }
     }
@@ -94,7 +101,6 @@ bool ScalarPipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *sc
         }
         else
         {
-            std::cout << " PASSING RD " << getStringFromRegName(decodeUnit.rd) << " TO EXU" << std::endl;
             executeUnit.AcceptData(decodeUnit.PCValue, decodeUnit.opcode, decodeUnit.rd, decodeUnit.rs1Value, decodeUnit.rs2Value, decodeUnit.imm, decodeUnit.requiresWriteBack, decodeUnit.requiresMemoryAccess);
             decodeUnit.setAsEmpty();
         }
@@ -114,10 +120,20 @@ bool ScalarPipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *sc
         }
     }
 
+    // Flush before fetching a new instruction, branch will have updated PC
+    if (triggerFlush)
+    {
+        if (debug)
+            std::cout << "FLUSHING" << std::endl;
+
+        this->flush();
+        triggerFlush = false;
+    }
+
     if (fetchUnit.empty && (cpu->registers[PC] < (int32_t)program->size()))
     {
         if (debug)
-            std::cout << "Fetching new" << std::endl;
+            std::cout << "Fetching at PC: " << cpu->registers[PC] << std::endl;
 
         fetchUnit.AcceptData(cpu->registers[PC]);
         pipelineAdvanced = true; // If we could fetch an instruction then we need to update pc, so signal to the cpu to do so
@@ -138,6 +154,19 @@ bool ScalarPipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *sc
     }
 
     return pipelineAdvanced;
+}
+
+void ScalarPipeline::flush()
+{
+    writebackUnit.setAsEmpty();
+    memoryAccessUnit.setAsEmpty();
+    executeUnit.setAsEmpty();
+    decodeUnit.setAsEmpty();
+    fetchUnit.setAsEmpty();
+
+    // Set everything as valid in the sscoreboard
+    for (int i = 0; i < REGABI_UNUSED; i++)
+        cpu->scoreboard->setValid((REGISTER_ABI_NAME)i);
 }
 
 // SuperscalarPipeline::SuperscalarPipeline(int n)
@@ -197,32 +226,11 @@ void CPU::Cycle()
 
     assert(running);
 
-    // If the program counter value is greater than the size of the program, just send NOP forever
-    // if (!(registers[PC] < (int32_t)program->size()))
-    // {
-    //     printf("PC beyond end of program on cycle %d\n", cycles); // debug
-    //     program->push_back(new Instruction());                    // add NOP to end of program
-    // }
-
     // Advance the pipeline
     bool pipelineAdvanced = pipeline->Advance(this, program, scoreboard);
 
     if (pipelineAdvanced)
         registers[PC]++;
-
-    // If the pipeline advanced we can move the pc along
-    // if (pipelineAdvanced)
-    // {
-    //     // Increment PC
-    //     registers[PC]++;
-    // }
-    // else
-    // {
-    //     if (debug)
-    //     {
-    //         std::cout << "Didnt inc pc" << std::endl;
-    //     }
-    // }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(speed));
 }

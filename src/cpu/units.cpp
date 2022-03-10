@@ -112,7 +112,6 @@ bool DecodeUnit::onCycle()
     REGISTER_ABI_NAME rs2 = instruction->rs2;
     rd = instruction->rd;
 
-    std::cout << " DU GOT RD " << getStringFromRegName(rd) << std::endl;
     imm = instruction->imm;
 
     requiresWriteBack = instruction->requiresWriteBack;
@@ -123,7 +122,8 @@ bool DecodeUnit::onCycle()
         rs1Value = cpu->registers[rs1];
         rs2Value = cpu->registers[rs2];
 
-        if (requiresWriteBack)
+        // Only use scoreboard if instruction requires a writeback, NOP has rd = REGABI_UNUSED so dont use scoreboard for that
+        if (requiresWriteBack && (rd != REGABI_UNUSED))
             sb->setInvalid(rd);
 
         if (debug)
@@ -160,16 +160,17 @@ bool MemoryAccessUnit::onCycle()
     if (requiresMemoryAccess)
     {
         if (debug)
-            std::cout << "Memory Operation on location : " << address << std::endl;
+            std::cout << "Memory Operation " << getStringFromOpcode(opcode) << " on location : " << address << " value: " << value << std::endl;
 
         value = PerformMemoryOperation(cpu, opcode, address, value); // Do load or store
     }
-    else if (debug)
+    else
     {
-        std::cout << "Memory operation not required" << std::endl;
-    }
+        if (debug)
+            std::cout << "Memory operation not required" << std::endl;
 
-    std::cout << " MAU Rd:" << getStringFromRegName(rd) << "VAL IS " << value << std::endl;
+        value = address; // JANK - this is because of how address and value need to be passed to MAU
+    }
 
     // If not complete return false
 
@@ -178,8 +179,6 @@ bool MemoryAccessUnit::onCycle()
 
 bool WriteBackUnit::onCycle()
 {
-    std::cout << "CURR WBU VAL IS " << value << std::endl;
-
     if (empty)
         return true;
 
@@ -193,8 +192,34 @@ bool WriteBackUnit::onCycle()
         if (debug)
             std::cout << "Writing back " << value << " into " << getStringFromRegName(rd) << std::endl;
 
-        cpu->registers[rd] = value;
-        cpu->scoreboard->setValid(rd);
+        bool doWriteback = true;
+        if (rd == PC)
+        {
+            // Slightly jank that we return pc+1, maybe refactor to use a "didBranch" control signal
+            if (value != PCValue + 1)
+            {
+                if (debug)
+                    std::cout << " -- BRANCHING TO: " << value << std::endl;
+
+                cpu->pipeline->triggerFlush = true;
+            }
+            else
+            {
+                if (debug)
+                    std::cout << " -- DIDNT BRANCH" << std::endl;
+
+                doWriteback = false; // Dont write back changes to PC if we didnt take the branch
+            }
+
+            // If we branched we need to flush the pipeline.
+        }
+
+        if (doWriteback)
+        {
+            cpu->registers[rd] = value;
+            cpu->scoreboard->setValid(rd);
+        }
+        // Branch operations overwrite PC
     }
     else if (debug)
     {

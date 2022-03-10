@@ -4,6 +4,7 @@
 #include "cpu.h"
 #include "isa.h"
 #include "parser.h"
+#include "debug_utils.h"
 
 #include <string>
 #include <iostream>
@@ -12,9 +13,11 @@ std::string TEST_PROGRAM_PATH = "src/tests/test_programs/";
 
 CPU *setupCPU(std::string filename, int memSize)
 {
-    Pipeline *pipeline = new Pipeline();
+    debug = true;
+    Pipeline *pipeline = new ScalarPipeline();
     Scoreboard *scoreboard = new SimpleScoreboard();
     CPU *cpu = new CPU(pipeline, scoreboard, memSize, 1);
+    pipeline->setCPU(cpu);
 
     runnable_program *program = new runnable_program;
     std::cout << (TEST_PROGRAM_PATH + filename) << std::endl;
@@ -37,8 +40,8 @@ void runCPU(CPU *cpu)
     std::cout << "Running..." << std::endl;
     while (cpu->running)
     {
-        cpu->cycles++;
         cpu->Cycle();
+        cpu->cycles++;
     }
     std::cout << "Finished..." << std::endl;
 }
@@ -46,11 +49,11 @@ void runCPU(CPU *cpu)
 TEST_CASE("Can set up CPU with simple program", "[cpu]")
 {
     std::string test_program = "hlt.prog";
-    CPU *cpu = setupCPU(test_program, 512);
+    CPU *cpu = setupCPU(test_program, 64);
     runCPU(cpu);
 
     REQUIRE(cpu->running == false);
-    REQUIRE(cpu->getMemorySize() == 512);
+    REQUIRE(cpu->getMemorySize() == 64);
 
     // Test memory wasnt changed
     for (int memAddr = 0; memAddr < cpu->getMemorySize(); memAddr++)
@@ -63,6 +66,9 @@ TEST_CASE("Can set up CPU with simple program", "[cpu]")
     {
         if (i == PC)
             continue;
+
+        if (cpu->registers[i] != 0)
+            std::cout << "REG WASNT ZZERO ::" << cpu->registers[i] << "REG: " << getStringFromRegName((REGISTER_ABI_NAME)i) << std::endl;
 
         REQUIRE(cpu->registers[i] == 0);
     }

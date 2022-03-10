@@ -8,7 +8,7 @@ Instruction_B::Instruction_B(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_AB
     opcode = _opcode;
     rs2 = _rs2;
     rs1 = _rs1;
-    rd = ZERO;
+    rd = PC;
     imm = _imm;
 
     requiresMemoryAccess = false;
@@ -32,7 +32,15 @@ Instruction_I::Instruction_I(OPCODE _opcode, REGISTER_ABI_NAME _rd, REGISTER_ABI
     rs2 = ZERO;
     imm = _imm;
 
-    requiresMemoryAccess = false;
+    switch (opcode)
+    {
+    case LW: // Loads are the only implmented I-format instructions that require a memory access
+        requiresMemoryAccess = true;
+        break;
+    default:
+        requiresMemoryAccess = false;
+        break;
+    }
     requiresWriteBack = true;
 }
 
@@ -57,19 +65,15 @@ Instruction_S::Instruction_S(OPCODE _opcode, REGISTER_ABI_NAME _rs1, REGISTER_AB
     imm = _imm;
 
     requiresMemoryAccess = true;
-
-    switch (opcode)
-    {
-    case LW: // Loads require writeback
-        requiresWriteBack = true;
-        break;
-    default:
-        requiresWriteBack = false;
-        break;
-    }
+    requiresWriteBack = false; // No implemented stores require a writeback
 }
 
 Instruction_Halt::Instruction_Halt()
 {
     opcode = HLT;
+    rd = ZERO;
+    rs1 = ZERO;
+    rs2 = ZERO;
+    requiresMemoryAccess = false;
+    requiresWriteBack = false;
 }

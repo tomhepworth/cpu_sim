@@ -11,10 +11,13 @@
 class Pipeline
 {
 public:
+    bool triggerFlush;
+
     Pipeline();
 
     virtual void setCPU(CPU *_cpu){};
     virtual bool Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard);
+    virtual void flush();
 };
 
 class CPU
@@ -136,6 +139,7 @@ public:
     int32_t rs2Value;
     int32_t imm;
     int32_t result;
+
     bool requiresWriteBack;
     bool requiresMemoryAccess;
 
@@ -179,22 +183,14 @@ public:
 
     bool onCycle();
     // Accept data from previous pipeline stage
-    void AcceptData(int32_t pc, OPCODE _opcode, REGISTER_ABI_NAME _rd, int32_t _value, bool reqWB, bool reqMA)
+    void AcceptData(int32_t pc, OPCODE _opcode, REGISTER_ABI_NAME _rd, int32_t _address, int32_t _value, bool reqWB, bool reqMA)
     {
-
-        /*
-            NOTE: if instrucion requres memory access _value will contain the address.
-            - for a STORE onCycle will do memory[address] = value
-            - for a LOAD onCycle will do value = memory[address]
-            - if the instruction does not require a memory access then value will contain
-            the result to be passed to a writeback unit
-        */
         PCValue = pc;
         opcode = _opcode;
         rd = _rd;
         requiresMemoryAccess = reqMA;
         requiresWriteBack = reqWB;
-        address = _value;
+        address = _address;
         value = _value; // Will get overwritten in onCycle if requiresMemoryAccess is true
         empty = false;
     };
@@ -223,8 +219,6 @@ public:
         rd = _rd;
         value = rdValue;
 
-        std::cout << "ACCEPTED VALUE " << rdValue << std::endl;
-
         requiresWriteBack = reqWB;
         empty = false;
     }
@@ -247,6 +241,7 @@ public:
 
     bool Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard);
     void setCPU(CPU *_cpu);
+    void flush();
 };
 
 // class SuperscalarPipeline : public Pipeline

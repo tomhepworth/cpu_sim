@@ -107,7 +107,7 @@ int main(int argc, char *const argv[])
         cpu->cycles++;
     }
 
-    printf("Program finished executing in %d cycles. T0 was %d\n", cpu->getCycles(), cpu->registers[T0]);
+    printf("Program finished executing in %d cycles", cpu->getCycles());
 
     cpu->regDump();
     cpu->memDump(0, cpu->getMemorySize());

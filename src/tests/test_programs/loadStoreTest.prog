@@ -2,7 +2,7 @@
 addi t0, x0, 100
 addi t1, x0, 200
 
-//Copy t0 into memory then into t2
+//Copy t0 into memory then from memory into t2
 sw t0, sp, 0
 lw t2, sp, 0
 
@@ -10,6 +10,7 @@ lw t2, sp, 0
 sw t1, 4(sp)
 lw t3, 4(sp)
 
+//Store t0 (100) at location 10
 addi t4, x0, 10
 sw t0, t4, 0
 
