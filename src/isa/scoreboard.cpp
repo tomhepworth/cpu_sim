@@ -13,7 +13,7 @@ void Scoreboard::log()
 
 SimpleScoreboard::SimpleScoreboard()
 {
-    // Initialize valid to false;
+    // Initialize valid to true;
     for (auto &&i : valid)
     {
         i = true;

@@ -17,7 +17,7 @@ int main(int argc, char *const argv[])
 {
     // Handle command line arguments
     int cpu_speed;
-    int memSize = 512;
+    int memSize = 64;
 
     int opt;
     std::string filename;
@@ -57,23 +57,25 @@ int main(int argc, char *const argv[])
         exit(EXIT_FAILURE);
     }
 
-    Pipeline *pipeline = new Pipeline();
+    Pipeline *pipeline = new ScalarPipeline();
     Scoreboard *scoreboard = new SimpleScoreboard();
 
-    CPU cpu = CPU(pipeline, scoreboard, memSize, cpu_speed);
+    CPU *cpu = new CPU(pipeline, scoreboard, memSize, cpu_speed);
+    pipeline->setCPU(cpu);
 
-    cpu.LoadProgram(program);
+    cpu->LoadProgram(program);
 
     if (debug)
     {
-        printf("CPU Memory size is : %d\n", cpu.getMemorySize());
+        printf("CPU Memory size is : %d\n", cpu->getMemorySize());
         printf("Using debug settings\n");
     }
 
     printf("Running...\n");
 
-    cpu.registers[PC] = 0;
-    while (cpu.running)
+    cpu->registers[PC] = 0;
+
+    while (cpu->running)
     {
         if (step) // If in step-through mode, wait for stdin
         {
@@ -85,13 +87,15 @@ int main(int argc, char *const argv[])
                 input = std::cin.get();
 
                 if (input == 'r')
-                    cpu.regDump();
+                    cpu->regDump();
 
                 if (input == 'm')
-                    cpu.memDump(0, 15);
+                    cpu->memDump(0, 15);
 
                 if (input == 's')
+                {
                     scoreboard->log();
+                }
 
                 if (input == 'c') // continue execution without step mode
                     step = false;
@@ -99,14 +103,14 @@ int main(int argc, char *const argv[])
             } while (input != '\n');
         }
 
-        cpu.cycles++;
-        cpu.Cycle();
+        cpu->Cycle();
+        cpu->cycles++;
     }
 
-    printf("Program finished executing in %d cycles. T0 was %d\n", cpu.getCycles(), cpu.registers[T0]);
+    printf("Program finished executing in %d cycles", cpu->getCycles());
 
-    cpu.regDump();
-    cpu.memDump(0, cpu.getMemorySize());
+    cpu->regDump();
+    cpu->memDump(0, cpu->getMemorySize());
 
     return 0;
 }

@@ -9,156 +9,177 @@
 
 Pipeline::Pipeline()
 {
-    // Initialise stages to 0, -1, -2 ... -(STAGE_COUNT - 1)
-    for (int i = 0; i < STAGE_COUNT; i++)
-    {
-        stageIndexes[i] = -1;
-    }
+    triggerFlush = false;
 }
 
 bool Pipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard)
 {
-
-    // // Shift all elements one place right and set FETCH to PC value
-    bool piplineFrozen = false;
-    for (int i = STAGE_COUNT; i >= 1; i--)
-    {
-        if (stageIndexes[i - 1] >= 0)
-        {
-            // If instruction has finished its stage, shift it to the next stage in pipeline
-            if (program->at(stageIndexes[i - 1])->free[i - 1])
-            {
-                if (i == 4 && stageIndexes[i] > 0)
-                {
-                    // IF inst is leaving pipeline, reset it
-                    // printf("Instruction %d leaving pipeline\n", i);
-                    program->at(stageIndexes[i])->reset();
-                }
-
-                // printf("Swapping %d to %d's position\n", i, i - 1);
-                stageIndexes[i] = stageIndexes[i - 1];
-                continue;
-            }
-            else // If it hadn't finished the stage, freeze the pipeline behind it
-            {
-
-                // printf("Freezing pipe, setting position %d to empty\n", i);
-                stageIndexes[i] = -1; // -1 indicates no instruction is in this stage
-                piplineFrozen = true;
-                break;
-            }
-        }
-        else
-        {
-            if (i == 4 && stageIndexes[i] > 0)
-            {
-                // IF inst is leaving pipeline, reset it
-                // printf("Instruction %d leaving pipeline\n", program->at(stageIndexes[i])->linenum);
-                program->at(stageIndexes[i])->reset();
-            }
-
-            // printf("Swapping empty position\n");
-            stageIndexes[i] = stageIndexes[i - 1];
-        }
-    }
-
-    // // Shift along pipeline
-    // for (int stage_index = WRITEBACK; stage_index != FETCH; stage_index--)
-    // {
-    //     CPU_STAGE stage = static_cast<CPU_STAGE>(stage_index);
-    //     bool swap = false;
-
-    //     // Just to stop segfault of doing program.at(-1)
-    //     if (!(stageIndexes[stage] < 0))
-    //     {
-    //         // If this unit has finished with its current instruction
-    //         if (program->at(stageIndexes[stage])->free[stage])
-    //         {
-    //             // Reset and move it out of pipeline
-    //             if (stage == WRITEBACK)
-    //                 program->at(stageIndexes[WRITEBACK])->reset();
-
-    //             // IF previous stage had finished too then move it into this slot
-    //             if (program->at(stageIndexes[stage - 1])->free[stage - 1])
-    //             {
-    //                 swap = true;
-    //             }
-    //             else // Otherwise default to -1 to show the unit is empty
-    //             {
-    //                 stageIndexes[stage] = -1;
-    //             }
-    //         }
-    //     }
-
-    //     if (swap)
-    //         stageIndexes[stage] = stageIndexes[stage - 1];
-    // }
-
-    // if (!(stageIndexes[FETCH] < 0) && !(stageIndexes[DECODE] < 0))
-    // {
-    //     if (!(program->at(stageIndexes[FETCH])->free[FETCH] && program->at(stageIndexes[DECODE])->free[DECODE]))
-    //         piplineFrozen = true;
-    // }
-
-    // If pipeline wasnt frozen, update instruction to be fetched
-    if (!piplineFrozen)
-    {
-        if (scoreboard->isValid(PC))
-        {
-            stageIndexes[FETCH] = cpu->registers[PC];
-        }
-        else
-        {
-            stageIndexes[FETCH] = -1;
-        }
-    }
-
-    if (debug)
-    {
-        std::cout << "PC:\t" << cpu->registers[PC] << std::endl;
-        std::cout << "F:\t" << std::to_string(stageIndexes[FETCH]) << "\t" << ((stageIndexes[FETCH] < 0) ? "unit empty" : program->at(stageIndexes[FETCH])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[FETCH])->linenum)) << std::endl;
-        std::cout << "D:\t" << std::to_string(stageIndexes[DECODE]) << "\t" << ((stageIndexes[DECODE] < 0) ? "unit empty" : program->at(stageIndexes[DECODE])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[DECODE])->linenum)) << std::endl;
-        std::cout << "E:\t" << std::to_string(stageIndexes[EXECUTE]) << "\t" << ((stageIndexes[EXECUTE] < 0) ? "unit empty" : program->at(stageIndexes[EXECUTE])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[EXECUTE])->linenum)) << std::endl;
-        std::cout << "M:\t" << std::to_string(stageIndexes[MEMORY]) << "\t" << ((stageIndexes[MEMORY] < 0) ? "unit empty" : program->at(stageIndexes[MEMORY])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[MEMORY])->linenum)) << std::endl;
-        std::cout << "W:\t" << std::to_string(stageIndexes[WRITEBACK]) << "\t" << ((stageIndexes[WRITEBACK] < 0) ? "unit empty" : program->at(stageIndexes[WRITEBACK])->rawText + "\t\t" + std::to_string(program->at(stageIndexes[WRITEBACK])->linenum)) << std::endl;
-    }
-
-    /*
-        Probably could make this more efficient
-    */
-    bool didFetch = true,
-         didDecode = true, didExec = true, didMem = true, didWB = true;
-    if (stageIndexes[WRITEBACK] >= 0)
-        didWB = program->at(stageIndexes[WRITEBACK])->writeBack(cpu, scoreboard);
-
-    if (stageIndexes[MEMORY] >= 0)
-        didMem = program->at(stageIndexes[MEMORY])->memoryAccess(cpu, scoreboard);
-
-    if (stageIndexes[EXECUTE] >= 0)
-        didExec = program->at(stageIndexes[EXECUTE])->execute(cpu, scoreboard);
-
-    if (stageIndexes[DECODE] >= 0)
-        didDecode = program->at(stageIndexes[DECODE])->decode(cpu, scoreboard);
-
-    if (stageIndexes[FETCH] >= 0)
-        didFetch = program->at(stageIndexes[FETCH])->fetch(cpu, scoreboard);
-
-    if (debug)
-    {
-        if (!didFetch)
-            std::cout << "Couldnt Fetch " << std::to_string(program->at(stageIndexes[FETCH])->linenum) << std::endl;
-        if (!didDecode)
-            std::cout << "Couldnt Decode " << std::to_string(program->at(stageIndexes[DECODE])->linenum) << std::endl;
-        if (!didExec)
-            std::cout << "Couldnt Execute " << std::to_string(program->at(stageIndexes[EXECUTE])->linenum) << std::endl;
-        if (!didMem)
-            std::cout << "Couldnt Memory Access " << std::to_string(program->at(stageIndexes[MEMORY])->linenum) << std::endl;
-        if (!didWB)
-            std::cout << "Couldnt Write Back " << std::to_string(program->at(stageIndexes[WRITEBACK])->linenum) << std::endl;
-    }
-
-    return !piplineFrozen;
+    return true;
 }
+
+void Pipeline::flush()
+{
+    // default do nothing
+}
+
+void ScalarPipeline::setCPU(CPU *_cpu)
+{
+    cpu = _cpu;
+    fetchUnit = FetchUnit(cpu);
+    decodeUnit = DecodeUnit(cpu);
+    executeUnit = ExecuteUnit(cpu);
+    memoryAccessUnit = MemoryAccessUnit(cpu);
+    writebackUnit = WriteBackUnit(cpu);
+}
+
+ScalarPipeline::ScalarPipeline(CPU *_cpu)
+{
+    cpu = _cpu;
+    fetchUnit = FetchUnit(cpu);
+    decodeUnit = DecodeUnit(cpu);
+    executeUnit = ExecuteUnit(cpu);
+    memoryAccessUnit = MemoryAccessUnit(cpu);
+    writebackUnit = WriteBackUnit(cpu);
+    triggerFlush = false;
+}
+
+bool ScalarPipeline::Advance(CPU *cpu, runnable_program *program, Scoreboard *scoreboard)
+{
+    bool pipelineAdvanced = false;
+
+    bool completedFetch, completedDecode, completedExecute, completedMemoryAccess, completedWriteback;
+
+    // All units perform their cycle task:
+    completedWriteback = writebackUnit.onCycle();
+    completedMemoryAccess = memoryAccessUnit.onCycle();
+    completedExecute = executeUnit.onCycle();
+    completedDecode = decodeUnit.onCycle();
+    completedFetch = fetchUnit.onCycle();
+
+    // If the unit completed its task and there is space in the next unit, move data forward
+
+    // Handle exit from pipeline
+    if (completedWriteback)
+    {
+        writebackUnit.setAsEmpty();
+    }
+
+    // Handle move to write back unit
+    if (completedMemoryAccess && writebackUnit.empty) // If prev stage complete and this stage is ready, update the unit
+    {
+        if (memoryAccessUnit.empty) // if the previous unit was empty, this unit becomes empty
+        {
+            writebackUnit.setAsEmpty();
+        }
+        else // Prev unit not empty, take update this unit with the relevant data
+        {
+            writebackUnit.AcceptData(memoryAccessUnit.PCValue, memoryAccessUnit.opcode, memoryAccessUnit.rd, memoryAccessUnit.value, memoryAccessUnit.requiresWriteBack);
+            memoryAccessUnit.setAsEmpty(); // Mark the previous unit as empty so it can be updated
+        }
+    }
+
+    // handle move to MemoryAccess unit
+    if (completedExecute && memoryAccessUnit.empty)
+    {
+        if (executeUnit.empty)
+        {
+            memoryAccessUnit.setAsEmpty();
+        }
+        else
+        {
+            memoryAccessUnit.AcceptData(executeUnit.PCValue, executeUnit.opcode, executeUnit.rd, executeUnit.result, executeUnit.rs1Value, executeUnit.requiresWriteBack, executeUnit.requiresMemoryAccess);
+            executeUnit.setAsEmpty();
+        }
+    }
+
+    // handle move to execute unit
+    if (completedDecode && executeUnit.empty)
+    {
+        if (decodeUnit.empty)
+        {
+            executeUnit.setAsEmpty();
+        }
+        else
+        {
+            executeUnit.AcceptData(decodeUnit.PCValue, decodeUnit.opcode, decodeUnit.rd, decodeUnit.rs1Value, decodeUnit.rs2Value, decodeUnit.imm, decodeUnit.requiresWriteBack, decodeUnit.requiresMemoryAccess);
+            decodeUnit.setAsEmpty();
+        }
+    }
+
+    // Handle move to decode unit
+    if (completedFetch && decodeUnit.empty)
+    {
+        if (fetchUnit.empty)
+        {
+            decodeUnit.setAsEmpty();
+        }
+        else
+        {
+            decodeUnit.AcceptData(fetchUnit.PCValue, fetchUnit.instruction);
+            fetchUnit.setAsEmpty();
+        }
+    }
+
+    // Flush before fetching a new instruction, branch will have updated PC
+    if (triggerFlush)
+    {
+        if (debug)
+            std::cout << "FLUSHING" << std::endl;
+
+        this->flush();
+        triggerFlush = false;
+    }
+
+    if (fetchUnit.empty && (cpu->registers[PC] < (int32_t)program->size()))
+    {
+        if (debug)
+            std::cout << "Fetching at PC: " << cpu->registers[PC] << std::endl;
+
+        fetchUnit.AcceptData(cpu->registers[PC]);
+        pipelineAdvanced = true; // If we could fetch an instruction then we need to update pc, so signal to the cpu to do so
+    }
+
+    if (debug)
+    {
+        std::cout << "F :: "
+                  << "empty: " << fetchUnit.empty << "\t" << fetchUnit.instruction->opcode << "\t" << fetchUnit.PCValue << "\tcompleted phase? " << completedFetch << "\t" << (!fetchUnit.empty ? cpu->program->at(fetchUnit.PCValue)->rawText : "none") << std::endl;
+        std::cout << "D :: "
+                  << "empty: " << decodeUnit.empty << "\t" << decodeUnit.opcode << "\t" << decodeUnit.PCValue << "\tcompleted phase? " << completedDecode << "\t" << (!decodeUnit.empty ? cpu->program->at(decodeUnit.PCValue)->rawText : "none") << std::endl;
+        std::cout << "E :: "
+                  << "empty: " << executeUnit.empty << "\t" << executeUnit.opcode << "\t" << executeUnit.PCValue << "\tcompleted phase? " << completedExecute << "\t" << (!executeUnit.empty ? cpu->program->at(executeUnit.PCValue)->rawText : "none") << std::endl;
+        std::cout << "M :: "
+                  << "empty: " << memoryAccessUnit.empty << "\t" << memoryAccessUnit.opcode << "\t" << memoryAccessUnit.PCValue << "\tcompleted phase? " << completedMemoryAccess << "\t" << (!memoryAccessUnit.empty ? cpu->program->at(memoryAccessUnit.PCValue)->rawText : "none") << std::endl;
+        std::cout << "W :: "
+                  << "empty: " << writebackUnit.empty << "\t" << writebackUnit.opcode << "\t" << writebackUnit.PCValue << "\tcompleted phase? " << completedWriteback << "\t" << (!writebackUnit.empty ? cpu->program->at(writebackUnit.PCValue)->rawText : "none") << std::endl;
+    }
+
+    return pipelineAdvanced;
+}
+
+void ScalarPipeline::flush()
+{
+    writebackUnit.setAsEmpty();
+    memoryAccessUnit.setAsEmpty();
+    executeUnit.setAsEmpty();
+    decodeUnit.setAsEmpty();
+    fetchUnit.setAsEmpty();
+
+    // Set everything as valid in the sscoreboard
+    for (int i = 0; i < REGABI_UNUSED; i++)
+        cpu->scoreboard->setValid((REGISTER_ABI_NAME)i);
+}
+
+// SuperscalarPipeline::SuperscalarPipeline(int n)
+// {
+//     if (n <= 1)
+//         printf("Warning: A superscalar pipeline should have n >= 1, consider using a scalar pipeline");
+
+//     fetchUnits = (FetchUnit *)calloc(n, sizeof(FetchUnit));
+//     decodeUnits = (DecodeUnit *)calloc(n, sizeof(DecodeUnit));
+//     executeUnits = (ExecuteUnit *)calloc(n, sizeof(ExecuteUnit));
+//     memoryAccessUnits = (MemoryAccessUnit *)calloc(n, sizeof(MemoryAccessUnit));
+//     writebackUnits = (WriteBackUnit *)calloc(n, sizeof(WriteBackUnit));
+// }
 
 CPU::CPU()
 {
@@ -201,48 +222,25 @@ void CPU::Cycle()
 {
 
     if (debug)
-        std::cout << "----------- Cylcle #" << cycles << "-----------" << std::endl;
+        std::cout << "----------- Cycle #" << cycles << " :: PC:" << registers[PC] << "-----------" << std::endl;
 
     assert(running);
-
-    // If the program counter value is greater than the size of the program, just send NOP forever
-    if (!(registers[PC] < (int32_t)program->size()))
-    {
-        // printf("PC beyond end of program on cycle %d\n", cycles); // debug
-        program->push_back(new Instruction()); // add NOP to end of program
-    }
 
     // Advance the pipeline
     bool pipelineAdvanced = pipeline->Advance(this, program, scoreboard);
 
-    // If the pipeline advanced we can move the pc along
     if (pipelineAdvanced)
-    {
-        // Increment PC
         registers[PC]++;
-    }
-    // else
-    // {
-    //     std::cout << "not incing pc" << std::endl;
-    // }
-    // Increment cycle count
-    cycles++;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(speed));
-
-    // Fetch - CPU reads instructions from the address in the memory whose value is present in the program counter
-    // Decode - instruction is decoded and the register file is accessed to get the values from the registers used in the instruction.
-    // Execute - ALU operations are performed.
-    // Memory Access - memory operands are read and written from/to the memory that is present in the instruction.
-    // Write Back - computed / fetched value is written back to the register present in the instructions.
 }
 
 void CPU::regDump()
 {
     std::cout << "------------REG-DUMP-------------" << std::endl;
-    for (size_t i = 0; i < REGABI_UNUSED; i++)
+    for (int i = 0; i < REGABI_UNUSED; i++)
     {
-        std::cout << i << ":\t" << registers[i] << std::endl;
+        std::cout << getStringFromRegName((REGISTER_ABI_NAME)i) << ":\t" << registers[i] << std::endl;
     }
     std::cout << "---------------------------------" << std::endl;
 }

@@ -44,10 +44,10 @@ std::map<std::string, REGISTER_ABI_NAME> registerMap = {
     {"a0", A0},
     {"a1", A1},
     {"a2", A2},
-    {"a3", A1},
-    {"a4", A1},
-    {"a5", A1},
-    {"a6", A1},
+    {"a3", A3},
+    {"a4", A4},
+    {"a5", A5},
+    {"a6", A6},
     {"a7", A7},
 
     {"s1", S1},
@@ -69,7 +69,7 @@ std::map<std::string, REGISTER_ABI_NAME> registerMap = {
 
     {"pc", PC},
 
-}; // extern in parser.h
+};
 
 std::map<std::string, int> labelTable;
 
