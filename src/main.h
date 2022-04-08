@@ -3,4 +3,12 @@
 
 #include <inttypes.h>
 
+enum PROCESSOR_MODES
+{
+    SCALAR,
+    OOO
+};
+
+int mode = OOO;
+
 #endif

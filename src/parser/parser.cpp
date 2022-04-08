@@ -103,7 +103,7 @@ bool parseImmediateValue(int32_t *imm, std::string imm_str, int instructionNumbe
             *imm = instructionNumber; // Store instruction numeber in imm so that it can be used to calculate the relative address when the label is found
         }
     }
-    std::cout << "imm for \"" << imm_str << "\" on Instruction-line " << instructionNumber << " is " << imm << std::endl;
+    // std::cout << "imm for \"" << imm_str << "\" on Instruction-line " << instructionNumber << " is " << *imm << std::endl;
     return ret;
 }
 

@@ -3,7 +3,7 @@ CFLAGS = -g -Wall -std=c++11
 SOURCE_DIR := src
 BUILD_DIR := build
 TEST_LIBS := src/libs/catch/
-VPATH = src/ src/parser/ src/isa/ src/cpu/ src/tests/ src/debug/
+VPATH = src/ src/parser/ src/isa/ src/cpu/ src/tests/ src/debug/ src/tomasulos
 
 #cppclean --include-path=src/ --include-path=src/parser/ --include-path=src/isa/ --include-path=src/cpu/ --include-path=src/tests/ --include-path=src/debug/ .
 

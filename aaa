@@ -1,0 +1,5 @@
+F   pc   
+D   pc i*   
+E   pc opcode rd rs1V rs2V imm reqWB reqMA
+M   pc opcode rd address value reqWB reqMA
+W   pc opcode rd rdV    reqWB

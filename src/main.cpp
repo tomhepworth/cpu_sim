@@ -12,6 +12,7 @@
 
 extern char *optarg;
 extern int optind, opterr, optopt;
+extern int mode;
 
 int main(int argc, char *const argv[])
 {
@@ -57,60 +58,70 @@ int main(int argc, char *const argv[])
         exit(EXIT_FAILURE);
     }
 
-    Pipeline *pipeline = new ScalarPipeline();
-    Scoreboard *scoreboard = new SimpleScoreboard();
-
-    CPU *cpu = new CPU(pipeline, scoreboard, memSize, cpu_speed);
-    pipeline->setCPU(cpu);
-
-    cpu->LoadProgram(program);
-
-    if (debug)
+    if (mode == SCALAR)
     {
-        printf("CPU Memory size is : %d\n", cpu->getMemorySize());
-        printf("Using debug settings\n");
-    }
+        Pipeline *pipeline = new ScalarPipeline();
+        Scoreboard *scoreboard = new SimpleScoreboard();
 
-    printf("Running...\n");
+        CPU *cpu = new CPU(pipeline, scoreboard, memSize, cpu_speed);
+        pipeline->setCPU(cpu);
 
-    cpu->registers[PC] = 0;
+        cpu->LoadProgram(program);
 
-    while (cpu->running)
-    {
-        if (step) // If in step-through mode, wait for stdin
+        if (debug)
         {
-            char input;
-            do
-            {
-                std::cout << '\n'
-                          << "Press a key to step...";
-                input = std::cin.get();
-
-                if (input == 'r')
-                    cpu->regDump();
-
-                if (input == 'm')
-                    cpu->memDump(0, 15);
-
-                if (input == 's')
-                {
-                    scoreboard->log();
-                }
-
-                if (input == 'c') // continue execution without step mode
-                    step = false;
-
-            } while (input != '\n');
+            printf("CPU Memory size is : %d\n", cpu->getMemorySize());
+            printf("Using debug settings\n");
         }
 
-        cpu->Cycle();
-        cpu->cycles++;
+        printf("Running...\n");
+
+        cpu->registers[PC] = 0;
+
+        while (cpu->running)
+        {
+            if (step) // If in step-through mode, wait for stdin
+            {
+                char input;
+                do
+                {
+                    std::cout << '\n'
+                              << "Press a key to step...";
+                    input = std::cin.get();
+
+                    if (input == 'r')
+                        cpu->regDump();
+
+                    if (input == 'm')
+                        cpu->memDump(0, 15);
+
+                    if (input == 's')
+                    {
+                        scoreboard->log();
+                    }
+
+                    if (input == 'c') // continue execution without step mode
+                        step = false;
+
+                } while (input != '\n');
+            }
+
+            cpu->Cycle();
+            cpu->cycles++;
+        }
+
+        printf("Program finished executing in %d cycles", cpu->getCycles());
+
+        cpu->regDump();
+        cpu->memDump(0, cpu->getMemorySize());
     }
-
-    printf("Program finished executing in %d cycles", cpu->getCycles());
-
-    cpu->regDump();
-    cpu->memDump(0, cpu->getMemorySize());
+    else if (mode == OOO)
+    {
+        }
+    else
+    {
+        std::cout << "UNKNOWN MODE - exiting" << std::endl;
+    }
 
     return 0;
 }
