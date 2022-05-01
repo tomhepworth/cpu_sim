@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "cpu.h"
 #include "scoreboard.h"
+#include "tomasulo.hpp"
 #include "debug_utils.h"
 
 extern char *optarg;
@@ -115,9 +116,13 @@ int main(int argc, char *const argv[])
         cpu->regDump();
         cpu->memDump(0, cpu->getMemorySize());
     }
-    else if (mode == OOO)
+    else if (mode == TOMASULOS)
     {
-        }
+        std::cout << "Mode: TOMASULOS" << std::endl;
+        TomasulosCPU *cpu = new TomasulosCPU(program);
+
+        cpu->Run(cpu_speed, step);
+    }
     else
     {
         std::cout << "UNKNOWN MODE - exiting" << std::endl;

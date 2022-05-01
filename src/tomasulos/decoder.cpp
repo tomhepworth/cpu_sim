@@ -1,4 +1,6 @@
 #include "decoder.hpp"
+#include "debug_utils.h"
+#include "reorderBuffer.hpp"
 
 void TomasulosDecoder::Cycle()
 {
@@ -114,6 +116,10 @@ void TomasulosDecoder::Cycle()
 
         // For debugging:
         lastUpdatedRS = rs->tag;
+
+        // Push into ReorderBuffer
+        ReorderBufferEntry *robEntry = new ReorderBufferEntry(rs->tag, -1, -1, -1, pcValue);
+        rob->push(robEntry);
     }
     else // Otherwise stall
     {
@@ -121,4 +127,14 @@ void TomasulosDecoder::Cycle()
     }
 
     return;
+}
+
+void TomasulosDecoder::print()
+{
+    std::cout << "OPCODE:\t" << getStringFromOpcode(opcode) << std::endl;
+    std::cout << "RS1:\t" << getStringFromRegName(rs1) << std::endl;
+    std::cout << "RS2:\t" << getStringFromRegName(rs2) << std::endl;
+    std::cout << "RD:\t" << getStringFromRegName(rd) << std::endl;
+    std::cout << "IMM:\t" << imm << std::endl;
+    std::cout << "STALLED?:\t" << stalled << std::endl;
 }

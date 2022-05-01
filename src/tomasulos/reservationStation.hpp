@@ -9,9 +9,11 @@
 
 typedef std::string TAG;
 
+// Some forward declarations:
 class ReservationStation;
 class DistributedReservationStation;
 class ReservationStationTable;
+class CommonDataBus;
 
 enum RESERVATION_STATION_TYPE
 {
@@ -24,6 +26,7 @@ enum RESERVATION_STATION_TYPE
 class ReservationStation
 {
 public:
+    CommonDataBus *cdb;
     TAG tag;
 
     bool empty;
@@ -37,10 +40,15 @@ public:
 
     ReservationStation(){};
 
-    ReservationStation(TAG masterTag, int32_t i);
+    ReservationStation(TAG masterTag, int32_t i, CommonDataBus *_cdb);
 
     void set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2);
     void clear();
+
+    /*
+    On cycle each reservation station should listen on the CDB for any tags it needs, update fields accordingly
+    */
+    void Cycle();
 };
 
 class DistributedReservationStation
@@ -54,12 +62,12 @@ public:
 
     DistributedReservationStation(){};
 
-    DistributedReservationStation(ReservationStationTable *_table, int _size, std::string _masterTag, RESERVATION_STATION_TYPE _type);
+    DistributedReservationStation(ReservationStationTable *_table, int _size, std::string _masterTag, RESERVATION_STATION_TYPE _type, CommonDataBus *_cdb);
 
     std::vector<ReservationStation *> stations;
 
-    // Take an instruction and assign it to a reservation station
-    void takeIn();
+    // Get a valid RS to give to execute in a functional unit
+    ReservationStation *getNextReady();
 };
 
 class ReservationStationTable
@@ -74,6 +82,8 @@ public:
     ReservationStationTable() {}
 
     ReservationStation *findByTag(TAG tag);
+
+    void print();
 };
 
 #endif

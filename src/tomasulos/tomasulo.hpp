@@ -9,6 +9,7 @@
 #include "regStatus.hpp"
 #include "decoder.hpp"
 #include "functionalUnit.hpp"
+#include "reorderBuffer.hpp"
 
 /* Points by Onar Mutlu:
 1: If reservation station available before renaming
@@ -37,9 +38,26 @@
 class TomasulosCPU
 {
 public:
+    int32_t cycles;
     runnable_program *program;
-    CommonDataBus *commonDataBus;
+    CommonDataBus *cdb;
+    ReservationStationTable *reservationStationTable;
+    RegisterStatusTable *registerStatusTable;
+    ReorderBuffer *rob;
+
+    // Functional units
+    TomasulosDecoder *decoder;
+    AdderUnit *adder;
+
+    // Instantiate and set up a tomasulos CPU
     TomasulosCPU() {}
+    TomasulosCPU(runnable_program *prog);
+
+    // Start cycling
+    void Run(int speed, bool step);
+
+    // Perform a cycle of the tomasulos cpu, return true to halt the cpu
+    bool Cycle();
 };
 
 #endif

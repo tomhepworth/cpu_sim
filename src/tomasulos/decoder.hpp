@@ -5,7 +5,8 @@
 #include "instruction.h"
 #include "cpu.h"
 #include "regStatus.hpp"
-
+#include "reorderBuffer.hpp"
+#include "debug_utils.h"
 /*
 In my simulator instructions are never binary so dont really need to be decoded
 
@@ -19,6 +20,7 @@ public:
   runnable_program *program;
   RegisterStatusTable *registerStatusTable;
   ReservationStationTable *reservationStationTable;
+  ReorderBuffer *rob;
 
   Instruction *currentInstruction;
 
@@ -33,17 +35,20 @@ public:
 
   TomasulosDecoder(){};
 
-  TomasulosDecoder(runnable_program *p, RegisterStatusTable *statusTable, ReservationStationTable *stationTable)
+  TomasulosDecoder(runnable_program *p, RegisterStatusTable *statusTable, ReservationStationTable *stationTable, ReorderBuffer *_rob)
   {
     stalled = false;
     program = p;
     registerStatusTable = statusTable;
     reservationStationTable = stationTable;
+    rob = _rob;
   }
 
   /*Take instruction from instruction memory, "decode", pass to available reservation station, stall if unable to pass
     The decode stage should rename registers where appropriate, or pass values straight in */
   void Cycle();
+
+  void print();
 };
 
 #endif

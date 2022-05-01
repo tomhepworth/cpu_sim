@@ -135,8 +135,9 @@ TEST_CASE("Relative branching", "[cpu]")
 
 TEST_CASE("Test reservation station tags", "[Reservation Stations]")
 {
+    CommonDataBus *cdb = new CommonDataBus();
     ReservationStationTable *t = new ReservationStationTable();
-    DistributedReservationStation *drs = new DistributedReservationStation(t, 3, "test", ADDER);
+    DistributedReservationStation *drs = new DistributedReservationStation(t, 3, "test", ADDER, cdb);
 
     REQUIRE(drs->masterTag == "test");
     REQUIRE(drs->stations[0]->tag == "test0");
@@ -151,14 +152,17 @@ TEST_CASE("Tomasulo Decoder Tests", "[Tomasulo Decoder]")
     bool parsingSuccess = parse(TEST_PROGRAM_PATH + "tomasuloTest1.prog", p);
     assert(parsingSuccess);
 
-    CommonDataBus *cdb = new CommonDataBus();
-    RegisterStatusTable *registerStatusTable = new RegisterStatusTable(cdb);
     ReservationStationTable *reservationStationTable = new ReservationStationTable();
+    RegisterStatusTable *registerStatusTable = new RegisterStatusTable();
+    CommonDataBus *cdb = new CommonDataBus(reservationStationTable, registerStatusTable);
+    registerStatusTable->cdb = cdb; // messy but necessary
 
-    DistributedReservationStation *loadstoreRS = new DistributedReservationStation(reservationStationTable, 1, "LOAD_STORE", LOAD_STORE);
-    DistributedReservationStation *adderRS = new DistributedReservationStation(reservationStationTable, 2, "ADDER", ADDER);
+    ReorderBuffer *rob = new ReorderBuffer(16, cdb);
 
-    TomasulosDecoder *decoder = new TomasulosDecoder(p, registerStatusTable, reservationStationTable);
+    DistributedReservationStation *loadstoreRS = new DistributedReservationStation(reservationStationTable, 1, "LOAD_STORE", LOAD_STORE, cdb);
+    DistributedReservationStation *adderRS = new DistributedReservationStation(reservationStationTable, 2, "ADDER", ADDER, cdb);
+
+    TomasulosDecoder *decoder = new TomasulosDecoder(p, registerStatusTable, reservationStationTable, rob);
 
     // 1 cycle should take and pass to adder unit's ReservationStation
     decoder->Cycle();
@@ -211,4 +215,53 @@ TEST_CASE("Tomasulo Decoder Tests", "[Tomasulo Decoder]")
     registerStatusTable->setRegValue(PC, 2);
     decoder->Cycle();
     REQUIRE(decoder->stalled == true); // Should now stall as no room for 3rd add in RS
+}
+
+TEST_CASE("Test Tomasulos Adder", "[Tomasulos Adder]")
+{
+    std::cout << "AAAAA" << std::endl;
+
+    runnable_program *p = new runnable_program;
+    bool parsingSuccess = parse(TEST_PROGRAM_PATH + "tomasuloTest1.prog", p);
+    assert(parsingSuccess);
+
+    ReservationStationTable *reservationStationTable = new ReservationStationTable();
+    RegisterStatusTable *registerStatusTable = new RegisterStatusTable();
+    CommonDataBus *cdb = new CommonDataBus(reservationStationTable, registerStatusTable);
+    registerStatusTable->cdb = cdb; // messy but necessary
+
+    ReorderBuffer *rob = new ReorderBuffer(16, cdb);
+
+    AdderUnit *adderFU = new AdderUnit(cdb, reservationStationTable, "ADDER", ADDER);
+
+    TomasulosDecoder *decoder = new TomasulosDecoder(p, registerStatusTable, reservationStationTable, rob);
+
+    REQUIRE(reservationStationTable->findByTag("ADDER0")->valid == false); // Should not be valid before RS is populated
+
+    // 1 cycle should take and pass to adder unit's ReservationStation
+    decoder->Cycle();
+    // Quickly confirm
+    REQUIRE(decoder->stalled == false);
+    REQUIRE(decoder->opcode == ADD);
+
+    // Check register status was updated
+    REQUIRE(registerStatusTable->entries.at(T3)->valid == false);
+    REQUIRE(registerStatusTable->entries.at(T3)->tag == "ADDER0");
+
+    // Check reservation station was updated
+    REQUIRE(reservationStationTable->findByTag("ADDER0")->valid == true); // Should now be valid as ready to execute next cycle
+    REQUIRE(reservationStationTable->findByTag("ADDER0")->empty == false);
+
+    // Adders 1st cycle should get instruction from RS and execute
+    adderFU->Cycle();
+    REQUIRE(adderFU->opcode == ADD);
+    REQUIRE(adderFU->toExecute->tag == "ADDER0");
+
+    // Check it executed and got broadcast by CDB and put back in reg status table
+    REQUIRE(registerStatusTable->entries.at(T3)->valid == true);
+    REQUIRE(registerStatusTable->entries.at(T3)->tag == "");
+
+    // Check it executed and got broadcast by CDB and put back in reservationStation table
+    // REQUIRE(reservationStationTable->findByTag("ADDER0")->valid == false); //Perhaps shouldnt be the case? RS is cleared when passed to FU
+    REQUIRE(reservationStationTable->findByTag("ADDER0")->empty == true);
 }
