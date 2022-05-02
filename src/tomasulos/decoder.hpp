@@ -45,8 +45,9 @@ public:
   }
 
   /*Take instruction from instruction memory, "decode", pass to available reservation station, stall if unable to pass
-    The decode stage should rename registers where appropriate, or pass values straight in */
-  void Cycle();
+    The decode stage should rename registers where appropriate, or pass values straight in
+    Return true if stalled */
+  bool Cycle();
 
   void print();
 };

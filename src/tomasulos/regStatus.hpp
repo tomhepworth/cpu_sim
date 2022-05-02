@@ -4,7 +4,13 @@
 #include <vector>
 #include "isa.h"
 #include "reservationStation.hpp"
+#include "cdb.hpp"
 #include "debug_utils.h"
+#include <iostream>
+
+// Forward Declarations
+class CommonDataBus;
+typedef std::string TAG;
 
 class RegisterStatusEntry
 {

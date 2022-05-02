@@ -10,6 +10,7 @@ ReservationStation::ReservationStation(TAG masterTag, int32_t i, CommonDataBus *
     source1 = "";
     source2 = "";
     valid = false;
+    robIndex = -1;
 }
 
 ReservationStation *ReservationStationTable::findByTag(TAG tag)
@@ -31,15 +32,16 @@ ReservationStation *ReservationStationTable::findByTag(TAG tag)
 
 void ReservationStationTable::print()
 {
-    std::cout << "EMPTY\tVALID\tOP\tS1\tV1\tS2\tV2\tIMM" << std::endl;
+    std::cout << "TAG\tEMPTY\tVALID\tOP\tS1\tV1\tS2\tV2\tIMM\tROBINDEZ" << std::endl;
     for (auto rs : table)
     {
-        std::cout << rs->empty << "\t" << rs->valid << "\t" << getStringFromOpcode(rs->operation) << "\t" << rs->source1 << "\t" << rs->val1 << "\t" << rs->source2 << "\t" << rs->val2 << "\t" << rs->imm << "\t" << std::endl;
+        std::cout << rs->tag << "\t" << rs->empty << "\t" << rs->valid << "\t" << getStringFromOpcode(rs->operation) << "\t" << rs->source1 << "\t" << rs->val1 << "\t" << rs->source2 << "\t" << rs->val2 << "\t" << rs->imm << "\t" << rs->robIndex << std::endl;
     }
 }
 
-void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2)
+void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _rob_index)
 {
+    std::cout << "SETTING RS OF TAG " << tag << std::endl;
     empty = false;
     valid = _valid;
     operation = _op;
@@ -47,10 +49,13 @@ void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG 
     source2 = _s2;
     val1 = _v1;
     val2 = _v2;
+    imm = _imm;
+    robIndex = _rob_index;
 }
 
 void ReservationStation::clear()
 {
+    std::cout << "clear was called on RS" << std::endl;
     empty = true;
     valid = false; // empty does not mean ready to execute
     operation = NOP;
@@ -58,30 +63,31 @@ void ReservationStation::clear()
     source2 = "";
     val1 = 0;
     val2 = 0;
+    robIndex = -1;
 }
 
 void ReservationStation::Cycle()
 {
     // See CommonDataBus::broadcast()
 
-    // TAG currentCDBTag = cdb->getTag();
+    TAG currentCDBTag = cdb->getTag();
 
-    // if (currentCDBTag == source1)
-    // {
-    //     val1 = cdb->getValue();
-    //     source1 = "";
-    // }
+    if (currentCDBTag == source1)
+    {
+        val1 = cdb->getValue();
+        source1 = "";
+    }
 
-    // if (currentCDBTag == source2)
-    // {
-    //     val2 = cdb->getValue();
-    //     source2 = "";
-    // }
+    if (currentCDBTag == source2)
+    {
+        val2 = cdb->getValue();
+        source2 = "";
+    }
 
-    // if (source1 == "" && source2 == "")
-    // {
-    //     valid = true; // Mark ready to execute
-    // }
+    if (source1 == "" && source2 == "")
+    {
+        valid = true; // Mark ready to execute
+    }
 }
 
 DistributedReservationStation::DistributedReservationStation(ReservationStationTable *_table, int _size, std::string _masterTag, RESERVATION_STATION_TYPE _type, CommonDataBus *_cdb)

@@ -232,7 +232,7 @@ TEST_CASE("Test Tomasulos Adder", "[Tomasulos Adder]")
 
     ReorderBuffer *rob = new ReorderBuffer(16, cdb);
 
-    AdderUnit *adderFU = new AdderUnit(cdb, reservationStationTable, "ADDER", ADDER);
+    AdderUnit *adderFU = new AdderUnit(cdb, reservationStationTable, "ADDER", rob, ADDER);
 
     TomasulosDecoder *decoder = new TomasulosDecoder(p, registerStatusTable, reservationStationTable, rob);
 

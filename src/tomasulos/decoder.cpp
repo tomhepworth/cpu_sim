@@ -2,15 +2,14 @@
 #include "debug_utils.h"
 #include "reorderBuffer.hpp"
 
-void TomasulosDecoder::Cycle()
+bool TomasulosDecoder::Cycle()
 {
-
     // If PC not valid then stall
     if (!registerStatusTable->getRegValid(PC))
     {
         std::cout << "Stalling!" << std::endl;
         stalled = true;
-        return;
+        return stalled;
     }
 
     // If not stalled then take a new instruction from instruction memory
@@ -28,12 +27,11 @@ void TomasulosDecoder::Cycle()
     bool foundFreeReservationStation = false;
     ReservationStation *rs;
 
-    // Search reservation station for a free space with the LOAD_STORE type
+    // Search reservation station for a free space
     for (auto group : reservationStationTable->stationGroups)
     {
         // This logic works because we only have adder or load_store type reservation stations rigt now
         int requiredType = ADDER;
-
         // If current instruction requires memory access, dispatch to load store queue
         if (currentInstruction->requiresMemoryAccess)
             requiredType = LOAD_STORE;
@@ -108,25 +106,33 @@ void TomasulosDecoder::Cycle()
         if (source1Valid && source2Valid)
             readyToExecute = true;
 
-        rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val);
+        // Push into ReorderBuffer
+        ReorderBufferEntry *robEntry = new ReorderBufferEntry(opcode, rs->tag, -1, -1, -1, pcValue);
+        int32_t robReference = rob->push(robEntry);
+        std::cout << "ROB REF IS " << robReference << std::endl;
+        if (robReference == -1) // ROB was full, stall
+        {
+            stalled = true;
+            return stalled;
+        }
 
+        // Set reservation station values
+        rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, robReference);
+
+        std::cout << "ROB SET IS " << rs->robIndex << std::endl;
         // Set destination register tag to reservation station tag, and mark invalid
         registerStatusTable->setRegTag(rd, rs->tag);
         registerStatusTable->setRegValid(rd, false);
 
         // For debugging:
         lastUpdatedRS = rs->tag;
-
-        // Push into ReorderBuffer
-        ReorderBufferEntry *robEntry = new ReorderBufferEntry(rs->tag, -1, -1, -1, pcValue);
-        rob->push(robEntry);
     }
     else // Otherwise stall
     {
         stalled = true;
     }
 
-    return;
+    return stalled;
 }
 
 void TomasulosDecoder::print()

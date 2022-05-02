@@ -17,7 +17,7 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog)
     rob = new ReorderBuffer(16, cdb);
 
     // Create functional units
-    adder = new AdderUnit(cdb, reservationStationTable, "ADDER", ADDER);
+    adder = new AdderUnit(cdb, reservationStationTable, "ADDER", rob, ADDER);
     decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob);
 
     std::cout << "TomasulosCPU halted" << std::endl;
@@ -49,20 +49,30 @@ void TomasulosCPU::Run(int speed, bool step)
 bool TomasulosCPU::Cycle()
 {
     bool halt = false;
-    decoder->Cycle();
+    rob->Cycle();
     adder->Cycle();
+    bool decodeStalled = decoder->Cycle();
+
+    // If decode didnt stall then it's safe to increase the PC
+    // Dont increase if we have reached the end of the program
+    int32_t currentPCValue = registerStatusTable->getRegValue(PC);
+    if (!decodeStalled && currentPCValue < program->size() - 1)
+    {
+        registerStatusTable->setRegValue(PC, currentPCValue + 1);
+    }
 
     if (debug)
     {
-        std::cout << " ============= TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << " ============ " << std::endl;
-        std::cout << "------- RegStatus: " << std::endl;
-        registerStatusTable->print();
-        std::cout << "------- ResStation: " << std::endl;
-        reservationStationTable->print();
+        std::cout << " ============= TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << " =========================================================================" << std::endl;
         std::cout << "------- Decoder: " << std::endl;
         decoder->print();
         std::cout << "------- Adder: " << std::endl;
         adder->print();
+        std::cout << "------- RegStatus: " << std::endl;
+        registerStatusTable->print();
+        std::cout << "------- ResStation: " << std::endl;
+        reservationStationTable->print();
+
         std::cout << "------- ROB: " << std::endl;
         rob->print();
 

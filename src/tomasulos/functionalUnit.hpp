@@ -14,14 +14,16 @@ public:
     TAG tag;
     RESERVATION_STATION_TYPE type;
     ReservationStation *toExecute;
+    ReorderBuffer *rob;
 
     OPCODE opcode;
     int32_t rs1Val;
     int32_t rs2Val;
     int32_t imm;
 
-    TomasuloFunctionalUnit(CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, RESERVATION_STATION_TYPE _type)
+    TomasuloFunctionalUnit(CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type)
     {
+        rob = _rob;
         cdb = _cdb;
         toExecute = nullptr;
         rst = _rst;
@@ -96,13 +98,14 @@ public:
 
         TAG resultTag = toExecute->tag;
 
-        // Mark RS as empty
-        toExecute->clear();
+        // Since result is ready to be executed its reservation station can be clear
+        // toExecute->clear();
 
         // TODO carry though instructions PC value or branches wont work
         int32_t result = PerformALUOperation(opcode, 0, rs1Val, rs2Val, imm);
 
-        cdb->broadcast(resultTag, result);
+        // update ROB
+        rob->updateField(resultTag, result, -1, -1, true, false);
     }
 
     void print()

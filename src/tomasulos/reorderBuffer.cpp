@@ -1,8 +1,9 @@
 #include "reorderBuffer.hpp"
 #include <iostream>
 
-ReorderBufferEntry::ReorderBufferEntry(TAG _destinationTag, int32_t _destinationVal, int32_t _storeAddr, int32_t _storeData, int32_t _PCValue)
+ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t _destinationVal, int32_t _storeAddr, int32_t _storeData, int32_t _PCValue)
 {
+    op = _op;
     destinationTag = _destinationTag;
     destinationVal = _destinationVal;
     storeAddr = _storeAddr;
@@ -12,7 +13,7 @@ ReorderBufferEntry::ReorderBufferEntry(TAG _destinationTag, int32_t _destination
 
 void ReorderBufferEntry::print()
 {
-    std::cout << destinationTag << "\t" << destinationVal << "\t" << storeAddr << "\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
+    std::cout << destinationTag << "\t\t" << destinationVal << "\t" << storeAddr << "\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
 }
 
 ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb)
@@ -28,20 +29,25 @@ ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb)
     buffer = new ReorderBufferEntry *[max];
 }
 
-void ReorderBuffer::push(ReorderBufferEntry *entry)
+int32_t ReorderBuffer::push(ReorderBufferEntry *entry)
 {
-    if (count == max)
+    if (count == max) // ROB FULL
     {
         // Handle error
         std::cout << "ROB FULL! - stall" << std::endl;
+        return -1;
     }
 
-    // Copy data into buffer
+    // Copy data into buffer, keep track of index
     buffer[head] = entry;
+    int32_t entryIndex = head;
 
     // Move head forward one
     head = (head + 1) % max;
     count++;
+
+    std::cout << "rob returning " << entryIndex << std::endl;
+    return entryIndex;
 }
 
 ReorderBufferEntry *ReorderBuffer::pop()
@@ -51,7 +57,7 @@ ReorderBufferEntry *ReorderBuffer::pop()
     if (count == 0)
     {
         // Empty cant pop
-        ret = new ReorderBufferEntry("EMPTY", -1, -1, -1, -1);
+        ret = new ReorderBufferEntry(NOP, "EMPTY", -1, -1, -1, -1);
         ret->ROBemptyFlag = true;
         return ret;
     }
@@ -62,27 +68,120 @@ ReorderBufferEntry *ReorderBuffer::pop()
     // increment tail & reduce count
     tail = (tail + 1) % max;
     count--;
+
+    // std::cout << "TAIL NOW: " << tail << std::endl;
 }
 
 void ReorderBuffer::print()
 {
     std::cout << "DEST_TAG\tDEST_VAL\tSTO_ADDR\tSTO_VAL\tPC\tVALID\t HEAD: " << head << "\tTAIL: " << tail << "\tCOUNT: " << count << std::endl;
-    int i = tail;
-    while (i < ((tail + count - 1) % max))
+    for (int i = 0; i < max; i++)
     {
-        buffer[i]->print();
-        if (i == tail)
+        // std::cout << " i is " << i << std::endl;
+        /* _ = empty, X = populated
+        Head before tail: [X,_,X,X] Need to be bigger than tail OR less than head
+                             ^ ^
+                             H T
+        Tail before head: [X,X,_,_] Need to be bigger than tail AND less than head
+                           ^   ^
+                           T   H
+        Head == Tail, either empty or full. if count > 0 then print
+        */
+        if ((tail < head && i >= tail && i < head) ||
+            (head < tail && (i >= tail || i < head)) ||
+            (head == tail && count > 0))
         {
-            std::cout << "<-- TAIL";
-        }
+            buffer[i]->print();
+            if (i == tail)
+            {
+                std::cout << "<-- TAIL";
+            }
 
-        if (i == head)
+            if (i == head)
+            {
+                std::cout << "<-- HEAD";
+            }
+
+            std::cout << std::endl;
+        }
+        else
         {
-            std::cout << "<-- HEAD";
+            std::cout << "empty" << std::endl;
         }
-
-        std::cout << std::endl;
-
-        i = (i + 1) % max;
     }
+}
+
+/*
+On a cycle the ROB shoud...
+
+- Peak at oldest instruction in the rob
+- if it is ready to be committed, pop it and broadcast on CDB
+- otherwise do nothing
+
+*/
+void ReorderBuffer::Cycle()
+{
+    // Should never have a negative number of elements
+    assert(count >= 0);
+
+    // Do nothing if empty
+    if (count == 0)
+        return;
+
+    // Look at oldest instruction
+    ReorderBufferEntry *oldest = buffer[tail];
+
+    if (oldest->valid)
+    {
+        std::cout << "ROB COMMITTING TAG : " << oldest->destinationTag << std::endl;
+
+        // If we are committing a halt, end everything
+        if (oldest->op == HLT)
+        {
+            std::cout << "HALT EXCEPTION COMMITTING! " << std::endl;
+            exit(0);
+        }
+
+        // Commit on cdb TODO: handle memory and register stuff differently here
+        cdb->broadcast(oldest->destinationTag, oldest->destinationVal);
+        pop(); // Pop instruction out of the ROB, dont bother using the result
+    }
+}
+
+void ReorderBuffer::updateField(TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
+{
+    std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl;
+    bool success = false;
+    for (int i = 0; i < max; i++)
+    {
+        // Logic to exclude empty elements in circular buffer
+        if ((tail < head && i >= tail && i < head) ||
+            (head < tail && (i >= tail || i < head)) ||
+            (head == tail && count > 0))
+        {
+            // If the element is populated then check if it is the right one to update
+            if (destinationTag == buffer[i]->destinationTag)
+            {
+                // Update
+                if (isStore)
+                {
+                    // Update memory destination and value
+                    buffer[i]->storeAddr = newStoreAddr;
+                    buffer[i]->storeData = newStoreData;
+                }
+                else
+                {
+                    // Update register destination and value
+                    buffer[i]->destinationVal = newVal;
+                }
+
+                // If appropriate, mark as valid so entry can be committed from ROB
+                buffer[i]->valid = valid;
+                success = true;
+            }
+        }
+    }
+
+    // We should never NOT find an instruction in the ROB
+    assert(success);
 }
