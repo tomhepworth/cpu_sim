@@ -40,6 +40,12 @@ void CommonDataBus::broadcast(TAG t, int32_t v)
         {
             rs->valid = true; // Mark ready to execute
         }
+
+        // Clear the reservation station and mark as empty when we broadcast with ITS OWN tag
+        if (tag == rs->tag)
+        {
+            rs->clear();
+        }
     }
 
     // Update the register values in the register status table
