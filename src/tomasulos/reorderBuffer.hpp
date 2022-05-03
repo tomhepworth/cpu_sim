@@ -45,7 +45,7 @@ public:
     ReorderBufferEntry *pop();
 
     // Find and update a field in the ROB, isStore should be true if we want to update storeAddr and storeData, otherwise we will use register destination and value
-    void updateField(TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore);
+    void updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore);
     void print();
     void Cycle();
 };

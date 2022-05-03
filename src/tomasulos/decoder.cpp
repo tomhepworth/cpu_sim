@@ -4,6 +4,9 @@
 
 bool TomasulosDecoder::Cycle()
 {
+    // At start of cycle assume not stalled
+    stalled = false;
+
     // If PC not valid then stall
     if (!registerStatusTable->getRegValid(PC))
     {
@@ -23,6 +26,11 @@ bool TomasulosDecoder::Cycle()
     rs2 = currentInstruction->rs2;
     rd = currentInstruction->rd;
     imm = currentInstruction->imm;
+    instructionPC = pcValue;
+
+    // Special case, dont try and put a NOP instruction in a reservation station, just do nothing
+    if (opcode == NOP)
+        return stalled;
 
     bool foundFreeReservationStation = false;
     ReservationStation *rs;
@@ -117,12 +125,17 @@ bool TomasulosDecoder::Cycle()
         }
 
         // Set reservation station values
-        rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, robReference);
+        rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference);
 
         std::cout << "ROB SET IS " << rs->robIndex << std::endl;
+
         // Set destination register tag to reservation station tag, and mark invalid
-        registerStatusTable->setRegTag(rd, rs->tag);
-        registerStatusTable->setRegValid(rd, false);
+        // but as a special case dont do this for x0 - x0 should never change
+        if (rd != ZERO)
+        {
+            registerStatusTable->setRegTag(rd, rs->tag);
+            registerStatusTable->setRegValid(rd, false);
+        }
 
         // For debugging:
         lastUpdatedRS = rs->tag;
@@ -142,5 +155,6 @@ void TomasulosDecoder::print()
     std::cout << "RS2:\t" << getStringFromRegName(rs2) << std::endl;
     std::cout << "RD:\t" << getStringFromRegName(rd) << std::endl;
     std::cout << "IMM:\t" << imm << std::endl;
+    std::cout << "Inst PC:\t" << instructionPC << std::endl;
     std::cout << "STALLED?:\t" << stalled << std::endl;
 }

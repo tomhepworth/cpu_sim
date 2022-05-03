@@ -1,4 +1,5 @@
 #include "reorderBuffer.hpp"
+#include "debug_utils.h"
 #include <iostream>
 
 ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t _destinationVal, int32_t _storeAddr, int32_t _storeData, int32_t _PCValue)
@@ -13,7 +14,7 @@ ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t 
 
 void ReorderBufferEntry::print()
 {
-    std::cout << destinationTag << "\t\t" << destinationVal << "\t" << storeAddr << "\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
+    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t" << storeAddr << "\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
 }
 
 ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb)
@@ -74,7 +75,7 @@ ReorderBufferEntry *ReorderBuffer::pop()
 
 void ReorderBuffer::print()
 {
-    std::cout << "DEST_TAG\tDEST_VAL\tSTO_ADDR\tSTO_VAL\tPC\tVALID\t HEAD: " << head << "\tTAIL: " << tail << "\tCOUNT: " << count << std::endl;
+    std::cout << "OP\tDEST_TAG\tDEST_VAL\tSTO_ADDR\tSTO_VAL\tPC\tVALID\t HEAD: " << head << "\tTAIL: " << tail << "\tCOUNT: " << count << std::endl;
     for (int i = 0; i < max; i++)
     {
         // std::cout << " i is " << i << std::endl;
@@ -148,7 +149,7 @@ void ReorderBuffer::Cycle()
     }
 }
 
-void ReorderBuffer::updateField(TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
+void ReorderBuffer::updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
 {
     std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl;
     bool success = false;

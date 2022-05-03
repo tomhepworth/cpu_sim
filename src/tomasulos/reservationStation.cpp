@@ -33,13 +33,13 @@ ReservationStation *ReservationStationTable::findByTag(TAG tag)
 void ReservationStationTable::print()
 {
     std::cout << "TAG\tEMPTY\tVALID\tOP\tS1\tV1\tS2\tV2\tIMM\tROBINDEZ" << std::endl;
-    for (auto rs : table)
+    for (ReservationStation *rs : table)
     {
         std::cout << rs->tag << "\t" << rs->empty << "\t" << rs->valid << "\t" << getStringFromOpcode(rs->operation) << "\t" << rs->source1 << "\t" << rs->val1 << "\t" << rs->source2 << "\t" << rs->val2 << "\t" << rs->imm << "\t" << rs->robIndex << std::endl;
     }
 }
 
-void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _rob_index)
+void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index)
 {
     std::cout << "SETTING RS OF TAG " << tag << std::endl;
     empty = false;
@@ -51,6 +51,7 @@ void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG 
     val2 = _v2;
     imm = _imm;
     robIndex = _rob_index;
+    pcValue = _pc;
 }
 
 void ReservationStation::clear()
@@ -113,7 +114,7 @@ ReservationStation *DistributedReservationStation::getNextReady()
 
     for (ReservationStation *rs : stations)
     {
-        if (rs->valid)
+        if (rs->valid && !rs->empty)
         {
             assert(rs->source1 == "" && rs->source2 == "");
             ret = rs;

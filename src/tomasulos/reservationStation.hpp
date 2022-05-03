@@ -39,12 +39,13 @@ public:
     int32_t val2;
     int32_t imm;
     int32_t robIndex;
+    int32_t pcValue;
 
     ReservationStation(){};
 
     ReservationStation(TAG masterTag, int32_t i, CommonDataBus *_cdb);
 
-    void set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _rob_index);
+    void set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index);
     void clear();
 
     /*

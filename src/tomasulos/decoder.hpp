@@ -29,6 +29,7 @@ public:
   REGISTER_ABI_NAME rs2;
   REGISTER_ABI_NAME rd;
   int32_t imm;
+  int32_t instructionPC;
   bool stalled;
 
   TAG lastUpdatedRS;

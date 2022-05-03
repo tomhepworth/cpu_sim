@@ -20,6 +20,7 @@ public:
     int32_t rs1Val;
     int32_t rs2Val;
     int32_t imm;
+    int32_t pcValue;
 
     TomasuloFunctionalUnit(CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type)
     {
@@ -95,26 +96,29 @@ public:
         rs1Val = toExecute->val1;
         rs2Val = toExecute->val2;
         imm = toExecute->imm;
+        pcValue = toExecute->pcValue;
 
         TAG resultTag = toExecute->tag;
 
-        // Since result is ready to be executed its reservation station can be clear
-        // toExecute->clear();
-
         // TODO carry though instructions PC value or branches wont work
-        int32_t result = PerformALUOperation(opcode, 0, rs1Val, rs2Val, imm);
+        int32_t result = PerformALUOperation(opcode, pcValue, rs1Val, rs2Val, imm);
 
         // update ROB
-        rob->updateField(resultTag, result, -1, -1, true, false);
+        rob->updateField(opcode, resultTag, result, -1, -1, true, false);
     }
 
     void print()
     {
-        std::cout << "TAG\t" << tag << std::endl;
+        // std::cout << "TAG\t" << tag << std::endl;
+        if (toExecute == nullptr)
+            return;
+
+        std::cout << "RES TAG\t" << toExecute->tag << std::endl;
         std::cout << "OP\t" << getStringFromOpcode(opcode) << std::endl;
         std::cout << "RS1V\t" << rs1Val << std::endl;
         std::cout << "RS2V\t" << rs2Val << std::endl;
         std::cout << "IMM\t" << imm << std::endl;
+        std::cout << "Inst PC\t" << pcValue << std::endl;
     }
 };
 
