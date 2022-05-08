@@ -3,8 +3,12 @@
 
 #include "cdb.hpp"
 #include "reservationStation.hpp"
+#include "reorderBuffer.hpp"
+#include "isa.h"
 #include "cpu.h"
 
+int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t address, int32_t value);
+;
 class TomasuloFunctionalUnit
 {
 public:
@@ -15,6 +19,7 @@ public:
     RESERVATION_STATION_TYPE type;
     ReservationStation *toExecute;
     ReorderBuffer *rob;
+    int32_t *memory;
 
     OPCODE opcode;
     int32_t rs1Val;
@@ -22,51 +27,40 @@ public:
     int32_t imm;
     int32_t pcValue;
 
-    TomasuloFunctionalUnit(CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type)
+    // Used in load store unit to decide whether to do a memory operation or calcualte an address
+    enum LOAD_STORE_PHASE
     {
-        rob = _rob;
-        cdb = _cdb;
-        toExecute = nullptr;
-        rst = _rst;
-        tag = _tag;
+        ADDR_CALC,
+        MEMORY_OPERATION
+    };
+    int phase;
 
-        std::cout << "my tag is... " << tag << std::endl;
-        type = _type;
-        reservationStations = new DistributedReservationStation(rst, RESERVATION_STATION_BUFFER_SIZE, tag, type, cdb);
-
-        opcode = NOP;
-        rs1Val = 0;
-        rs2Val = 0;
-        imm = 0;
-    }
+    TomasuloFunctionalUnit(int32_t *_memory, CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type);
 };
 
 class LoadStoreUnit : public TomasuloFunctionalUnit
 {
-
+public:
     /*
     Note:
     For simplicity take a conservative approach to memory disambiguation.
     Just stall a load until all previous stores have committed
+
+    do this by getting the OLDEST READY memory operation from the distributed reservation station
     */
+
+    int32_t calculatedAddress;
+    int32_t value;
+    int32_t result;
+    TAG resultTag;
 
     // Inherit constructor
     using TomasuloFunctionalUnit::TomasuloFunctionalUnit;
 
     /* Take from load store queue (res station), calculate address, do the load/store, pass to CDB for committing*/
-    void Cycle()
-    {
-        toExecute = reservationStations->getNextReady();
+    void Cycle();
 
-        // Case where none are ready to execute
-        if (toExecute == nullptr)
-        {
-            // stall
-            return;
-        }
-
-        // Otherwise execute
-    }
+    void print();
 };
 
 class AdderUnit : public TomasuloFunctionalUnit
@@ -78,48 +72,9 @@ public:
     /*
      Take ready instruction from reservation stations, execute it, pass completed to CDB
     */
-    void Cycle()
-    {
-        toExecute = reservationStations->getNextReady();
+    void Cycle();
 
-        // Case where none are ready to execute
-        if (toExecute == nullptr)
-        {
-            // stall
-            return;
-        }
-
-        // Otherwise, execute
-
-        // Extract values
-        opcode = toExecute->operation;
-        rs1Val = toExecute->val1;
-        rs2Val = toExecute->val2;
-        imm = toExecute->imm;
-        pcValue = toExecute->pcValue;
-
-        TAG resultTag = toExecute->tag;
-
-        // TODO carry though instructions PC value or branches wont work
-        int32_t result = PerformALUOperation(opcode, pcValue, rs1Val, rs2Val, imm);
-
-        // update ROB
-        rob->updateField(opcode, resultTag, result, -1, -1, true, false);
-    }
-
-    void print()
-    {
-        // std::cout << "TAG\t" << tag << std::endl;
-        if (toExecute == nullptr)
-            return;
-
-        std::cout << "RES TAG\t" << toExecute->tag << std::endl;
-        std::cout << "OP\t" << getStringFromOpcode(opcode) << std::endl;
-        std::cout << "RS1V\t" << rs1Val << std::endl;
-        std::cout << "RS2V\t" << rs2Val << std::endl;
-        std::cout << "IMM\t" << imm << std::endl;
-        std::cout << "Inst PC\t" << pcValue << std::endl;
-    }
+    void print();
 };
 
 #endif

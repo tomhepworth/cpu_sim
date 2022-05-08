@@ -2,7 +2,21 @@
 #include "debug_utils.h"
 #include "reorderBuffer.hpp"
 
-bool TomasulosDecoder::Cycle()
+RESERVATION_STATION_TYPE getReservationStationTypeFromOpode(OPCODE opcode)
+{
+    switch (opcode)
+    {
+    case LW:
+    case SW:
+        return LOAD_STORE;
+        break;
+    default:
+        return ADDER;
+        break;
+    }
+}
+
+bool TomasulosDecoder::Cycle(int32_t cpuCycle)
 {
     // At start of cycle assume not stalled
     stalled = false;
@@ -30,7 +44,19 @@ bool TomasulosDecoder::Cycle()
 
     // Special case, dont try and put a NOP instruction in a reservation station, just do nothing
     if (opcode == NOP)
+    {
+        stalled = true;
         return stalled;
+    }
+
+    // Special case, if we are halted return, dont send HLT through the pipeline
+    if (opcode == HLT)
+    {
+        // In the cycle, If ROB is empty, no reservation stations are busy, and we saw a halt...
+        // Then we didnt see a halt through speculative execution so it is safe to exit the program
+        stalled = true;
+        return stalled;
+    }
 
     bool foundFreeReservationStation = false;
     ReservationStation *rs;
@@ -38,11 +64,8 @@ bool TomasulosDecoder::Cycle()
     // Search reservation station for a free space
     for (auto group : reservationStationTable->stationGroups)
     {
-        // This logic works because we only have adder or load_store type reservation stations rigt now
-        int requiredType = ADDER;
-        // If current instruction requires memory access, dispatch to load store queue
-        if (currentInstruction->requiresMemoryAccess)
-            requiredType = LOAD_STORE;
+        // Get the required type of reservation station
+        int requiredType = getReservationStationTypeFromOpode(opcode);
 
         if (group->type == requiredType)
         {
@@ -125,7 +148,7 @@ bool TomasulosDecoder::Cycle()
         }
 
         // Set reservation station values
-        rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference);
+        rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference, cpuCycle);
 
         std::cout << "ROB SET IS " << rs->robIndex << std::endl;
 

@@ -5,19 +5,23 @@
 // {
 // }
 
-TomasulosCPU::TomasulosCPU(runnable_program *prog)
+TomasulosCPU::TomasulosCPU(runnable_program *prog, int32_t _memorySize)
 {
     cycles = 0;
     program = prog;
+    memorySize = _memorySize;
+    memory = (int32_t *)calloc(memorySize, sizeof(int32_t));
 
     reservationStationTable = new ReservationStationTable();
     registerStatusTable = new RegisterStatusTable();
     cdb = new CommonDataBus(reservationStationTable, registerStatusTable);
     registerStatusTable->cdb = cdb; // messy but necessary
-    rob = new ReorderBuffer(16, cdb);
+    rob = new ReorderBuffer(16, cdb, memory);
 
     // Create functional units
-    adder = new AdderUnit(cdb, reservationStationTable, "ADDER", rob, ADDER);
+    adder = new AdderUnit(memory, cdb, reservationStationTable, "ADDER", rob, ADDER);
+    loadStoreUnit = new LoadStoreUnit(memory, cdb, reservationStationTable, "LS", rob, LOAD_STORE);
+
     decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob);
 
     std::cout << "TomasulosCPU halted" << std::endl;
@@ -44,6 +48,10 @@ void TomasulosCPU::Run(int speed, bool step)
         if (halt)
             break;
     }
+
+    // TODO Print pretty stats here
+    std::cout << TERMINAL_RED << "Program Halting!" << TERMINAL_RESET << std::endl;
+    return;
 }
 
 bool TomasulosCPU::Cycle()
@@ -51,7 +59,8 @@ bool TomasulosCPU::Cycle()
     bool halt = false;
     rob->Cycle();
     adder->Cycle();
-    bool decodeStalled = decoder->Cycle();
+    loadStoreUnit->Cycle();
+    bool decodeStalled = decoder->Cycle(cycles);
 
     // If decode didnt stall then it's safe to increase the PC
     // Dont increase if we have reached the end of the program
@@ -66,21 +75,44 @@ bool TomasulosCPU::Cycle()
         std::cout << " ============= TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << " =========================================================================" << std::endl;
         std::cout << "------- Decoder: " << std::endl;
         decoder->print();
-        std::cout << "------- Adder: " << std::endl;
+        std::cout << TERMINAL_RESET << "------- Adder: " << TERMINAL_GREEN << std::endl;
         adder->print();
-        std::cout << "------- RegStatus: " << std::endl;
+        std::cout << TERMINAL_RESET << "------- LoadStore: " << TERMINAL_MAGENTA << std::endl;
+        loadStoreUnit->print();
+        std::cout << TERMINAL_RESET << "------- RegStatus: " << TERMINAL_CYAN << std::endl;
         registerStatusTable->print();
-        std::cout << "------- ResStation: " << std::endl;
+        std::cout << TERMINAL_RESET << "------- ResStation: " << TERMINAL_YELLOW << std::endl;
         reservationStationTable->print();
-
-        std::cout << "------- ROB: " << std::endl;
+        std::cout << TERMINAL_RESET << "------- ROB: " << TERMINAL_BLUE << std::endl;
         rob->print();
+        std::cout << TERMINAL_RESET << "------- MEMORY: " << TERMINAL_RED << std::endl;
+        memDump();
 
         std::cout
-            << " =========== END TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << "  ========== " << std::endl;
+            << TERMINAL_RESET << " =========== END TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << "  ========== " << std::endl;
     }
 
     cycles++;
 
+    if (decodeStalled && rob->count == 0 && reservationStationTable->allStationsEmpty())
+    {
+        halt = true; // TODO print with nice shutdown statistics
+    }
+
     return halt;
+}
+
+void TomasulosCPU::memDump()
+{
+    int32_t cols = 12;
+    int32_t columnsize = memorySize / cols;
+
+    for (int i = 0; i < columnsize; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            std::cout << " |\t0x" << i + j * columnsize << "\t" << memory[i + j * columnsize];
+        }
+        std::cout << std::endl;
+    }
 }

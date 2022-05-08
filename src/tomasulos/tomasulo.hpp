@@ -40,6 +40,8 @@ class TomasulosCPU
 public:
     int32_t cycles;
     runnable_program *program;
+    int32_t memorySize;
+    int32_t *memory;
     CommonDataBus *cdb;
     ReservationStationTable *reservationStationTable;
     RegisterStatusTable *registerStatusTable;
@@ -48,16 +50,19 @@ public:
     // Functional units
     TomasulosDecoder *decoder;
     AdderUnit *adder;
+    LoadStoreUnit *loadStoreUnit;
 
     // Instantiate and set up a tomasulos CPU
     TomasulosCPU() {}
-    TomasulosCPU(runnable_program *prog);
+    TomasulosCPU(runnable_program *prog, int32_t _memorySize);
 
     // Start cycling
     void Run(int speed, bool step);
 
     // Perform a cycle of the tomasulos cpu, return true to halt the cpu
     bool Cycle();
+
+    void memDump();
 };
 
 #endif

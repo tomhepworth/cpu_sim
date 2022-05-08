@@ -19,7 +19,7 @@ int main(int argc, char *const argv[])
 {
     // Handle command line arguments
     int cpu_speed;
-    int memSize = 64;
+    int memSize = 128;
 
     int opt;
     std::string filename;
@@ -119,7 +119,7 @@ int main(int argc, char *const argv[])
     else if (mode == TOMASULOS)
     {
         std::cout << "Mode: TOMASULOS" << std::endl;
-        TomasulosCPU *cpu = new TomasulosCPU(program);
+        TomasulosCPU *cpu = new TomasulosCPU(program, memSize);
 
         cpu->Run(cpu_speed, step);
     }

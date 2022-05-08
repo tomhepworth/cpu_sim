@@ -30,19 +30,31 @@ ReservationStation *ReservationStationTable::findByTag(TAG tag)
     return ret;
 }
 
+bool ReservationStationTable::allStationsEmpty()
+{
+    for (auto station : this->table)
+    {
+        if (!station->empty)
+            return false;
+    }
+
+    return true;
+}
+
 void ReservationStationTable::print()
 {
-    std::cout << "TAG\tEMPTY\tVALID\tOP\tS1\tV1\tS2\tV2\tIMM\tROBINDEZ" << std::endl;
+    std::cout << "TAG\tEMPTY\tVALID\tBUSY\tOP\tS1\tV1\tS2\tV2\tIMM\tROBI\tCY" << std::endl;
     for (ReservationStation *rs : table)
     {
-        std::cout << rs->tag << "\t" << rs->empty << "\t" << rs->valid << "\t" << getStringFromOpcode(rs->operation) << "\t" << rs->source1 << "\t" << rs->val1 << "\t" << rs->source2 << "\t" << rs->val2 << "\t" << rs->imm << "\t" << rs->robIndex << std::endl;
+        std::cout << rs->tag << "\t" << rs->empty << "\t" << rs->valid << "\t" << rs->busy << "\t" << getStringFromOpcode(rs->operation) << "\t" << rs->source1 << "\t" << rs->val1 << "\t" << rs->source2 << "\t" << rs->val2 << "\t" << rs->imm << "\t" << rs->robIndex << "\t" << rs->insertionCycle << std::endl;
     }
 }
 
-void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index)
+void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index, int32_t _insertionCycle)
 {
     std::cout << "SETTING RS OF TAG " << tag << std::endl;
     empty = false;
+    busy = false;
     valid = _valid;
     operation = _op;
     source1 = _s1;
@@ -52,11 +64,12 @@ void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG 
     imm = _imm;
     robIndex = _rob_index;
     pcValue = _pc;
+    insertionCycle = _insertionCycle;
 }
 
 void ReservationStation::clear()
 {
-    std::cout << "clear was called on RS" << std::endl;
+    std::cout << "clear was called on RS: " << tag << std::endl;
     empty = true;
     valid = false; // empty does not mean ready to execute
     operation = NOP;
@@ -64,6 +77,8 @@ void ReservationStation::clear()
     source2 = "";
     val1 = 0;
     val2 = 0;
+    imm = 0;
+    busy = false;
     robIndex = -1;
 }
 
@@ -114,7 +129,7 @@ ReservationStation *DistributedReservationStation::getNextReady()
 
     for (ReservationStation *rs : stations)
     {
-        if (rs->valid && !rs->empty)
+        if (rs->valid && !rs->empty && !rs->busy)
         {
             assert(rs->source1 == "" && rs->source2 == "");
             ret = rs;
@@ -122,5 +137,28 @@ ReservationStation *DistributedReservationStation::getNextReady()
         }
     }
 
+    // ret->busy = true;
+    return ret;
+}
+
+// Gets the oldest ready instruction from the DRS
+ReservationStation *DistributedReservationStation::getOldestReady()
+{
+    ReservationStation *ret = nullptr;
+    int32_t oldest = INT32_MAX;
+
+    for (ReservationStation *rs : stations)
+    {
+        if (rs->valid && !rs->empty && rs->insertionCycle < oldest && !rs->busy)
+        {
+            assert(rs->source1 == "" && rs->source2 == "");
+            ret = rs;
+            oldest = rs->insertionCycle;
+            // break;
+        }
+    }
+
+    // std::cout << "GET OLDEST READY RETURNED: " << ret->tag << std::endl;
+    // ret->busy = true;
     return ret;
 }

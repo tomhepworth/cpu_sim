@@ -14,12 +14,13 @@ ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t 
 
 void ReorderBufferEntry::print()
 {
-    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t" << storeAddr << "\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
+    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t" << storeAddr << "\t\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
 }
 
-ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb)
+ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory)
 {
     cdb = _cdb;
+    memory = _memory;
 
     max = _size;
     full = false;
@@ -71,6 +72,7 @@ ReorderBufferEntry *ReorderBuffer::pop()
     count--;
 
     // std::cout << "TAIL NOW: " << tail << std::endl;
+    return ret;
 }
 
 void ReorderBuffer::print()
@@ -107,7 +109,7 @@ void ReorderBuffer::print()
         }
         else
         {
-            std::cout << "empty" << std::endl;
+            // std::cout << "empty" << std::endl;
         }
     }
 }
@@ -143,8 +145,28 @@ void ReorderBuffer::Cycle()
             exit(0);
         }
 
-        // Commit on cdb TODO: handle memory and register stuff differently here
+        // Commit on cdb, or for stores, write to memory
+        switch (oldest->op)
+        {
+        // case SB:
+        case SW:
+            // Commit a store to memory
+            memory[oldest->storeAddr] = oldest->storeData;
+            break;
+        default:
+            // Anything other than stores just needs to be broadcast on CDB
+            break;
+        }
+
         cdb->broadcast(oldest->destinationTag, oldest->destinationVal);
+
+        /*
+            Note on memory disambiguation...
+            As dependencies on stores are possible it would seem we should broadcast a store on the CDB.
+            However, we wait for all previous stores to be completed before a load is done, so these dependencies cant cause problems
+            and the RAW memory dependencies shouldnt show up in the RST
+        */
+
         pop(); // Pop instruction out of the ROB, dont bother using the result
     }
 }

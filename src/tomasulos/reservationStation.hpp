@@ -32,6 +32,7 @@ public:
 
     bool empty;
     bool valid;
+    bool busy;
     OPCODE operation;
     TAG source1;
     TAG source2;
@@ -40,12 +41,13 @@ public:
     int32_t imm;
     int32_t robIndex;
     int32_t pcValue;
+    int32_t insertionCycle; // The cycle the instruction was inserted into a reservation station on - used to determine its age
 
     ReservationStation(){};
 
     ReservationStation(TAG masterTag, int32_t i, CommonDataBus *_cdb);
 
-    void set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index);
+    void set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index, int32_t _insertionCycle);
     void clear();
 
     /*
@@ -71,6 +73,7 @@ public:
 
     // Get a valid RS to give to execute in a functional unit
     ReservationStation *getNextReady();
+    ReservationStation *getOldestReady();
 };
 
 class ReservationStationTable
@@ -85,6 +88,9 @@ public:
     ReservationStationTable() {}
 
     ReservationStation *findByTag(TAG tag);
+
+    // True if all reservation stations are marked as empty
+    bool allStationsEmpty();
 
     void print();
 };

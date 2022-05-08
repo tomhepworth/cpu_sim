@@ -37,8 +37,9 @@ public:
     bool full;
 
     CommonDataBus *cdb;
+    int32_t *memory;
 
-    ReorderBuffer(int _size, CommonDataBus *_cdb);
+    ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory);
 
     // Add an entry to the ROB, return its index to be used as a reference to it
     int32_t push(ReorderBufferEntry *entry);

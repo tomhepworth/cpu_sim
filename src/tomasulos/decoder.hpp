@@ -14,6 +14,8 @@ The decode unit in my tomasulos implementation just serves to pass the instructi
 to the correct reservation station, doing any renaming, and stall if there is none available
 */
 
+RESERVATION_STATION_TYPE getReservationStationTypeFromOpode(OPCODE opcode);
+
 class TomasulosDecoder
 {
 public:
@@ -48,7 +50,7 @@ public:
   /*Take instruction from instruction memory, "decode", pass to available reservation station, stall if unable to pass
     The decode stage should rename registers where appropriate, or pass values straight in
     Return true if stalled */
-  bool Cycle();
+  bool Cycle(int32_t cpuCycle);
 
   void print();
 };
