@@ -11,6 +11,14 @@ ReservationStation::ReservationStation(TAG masterTag, int32_t i, CommonDataBus *
     source2 = "";
     valid = false;
     robIndex = -1;
+    val1 = 0;
+    val2 = 0;
+    imm = 0;
+    robIndex = -1;
+    pcValue = -1;
+    insertionCycle = -1;
+    busy = false;
+    operation = NOP;
 }
 
 ReservationStation *ReservationStationTable::findByTag(TAG tag)

@@ -18,7 +18,7 @@ HEADER_INCLUDES = $(addprefix -I, $(VPATH))
 
 all: dir simulator test
 sim: dir simulator
-test: dir tests
+test: dir testscalar testooo
 
 run: all
 	./test
@@ -30,9 +30,14 @@ simulator: $(CPP_OBJS) $(BUILD_DIR)/main.o
 
 
 # For building tests include testing library (catch2), add flags for test mode, and set build output directory
-tests: HEADER_INCLUDES += -Isrc/libs/catch/
-tests: $(CPP_OBJS) $(BUILD_DIR)/test.o
-	$(COMPILER) $(CFLAGS) -o test $^ $(HEADER_INCLUDES)
+testscalar: HEADER_INCLUDES += -Isrc/libs/catch/
+testscalar: $(CPP_OBJS) $(BUILD_DIR)/test_scalar.o
+	$(COMPILER) $(CFLAGS) -o scalartest $^ $(HEADER_INCLUDES)
+
+testooo: HEADER_INCLUDES += -Isrc/libs/catch/
+testooo: $(CPP_OBJS) $(BUILD_DIR)/test_ooo.o
+	$(COMPILER) $(CFLAGS) -o oootest $^ $(HEADER_INCLUDES)
+
 
 
 # Build object files from cpp files

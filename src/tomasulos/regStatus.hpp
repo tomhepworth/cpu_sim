@@ -102,6 +102,7 @@ public:
 
     void print()
     {
+        std::cout << "PC:" << entries[PC]->value << std::endl;
         std::cout << "REG\tTAG\t\tVALID\tVAL\tREG\tTAG\t\tVALID\tVAL\tREG\tTAG\t\tVALID\tVAL\tREG\tTAG\t\tVALID\tVAL" << std::endl;
         int columnSize = entries.size() / 4;
 

@@ -10,18 +10,18 @@ ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t 
     storeAddr = _storeAddr;
     storeData = _storeData;
     PCValue = _PCValue;
+    valid = false;
 };
 
 void ReorderBufferEntry::print()
 {
-    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t" << storeAddr << "\t\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
+    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t\t" << storeAddr << "\t\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
 }
 
 ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory)
 {
     cdb = _cdb;
     memory = _memory;
-
     max = _size;
     full = false;
     tail = 0;

@@ -51,6 +51,11 @@ void TomasulosCPU::Run(int speed, bool step)
 
     // TODO Print pretty stats here
     std::cout << TERMINAL_RED << "Program Halting!" << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_CYAN << "===== " << TERMINAL_MAGENTA << "Stats!" << TERMINAL_CYAN << " =====" << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_GREEN << "Cycles:\t" << cycles << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_RED << "Stalls:\t" << cycles << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BLUE << "IPC:\t" << mean_ipc << TERMINAL_RESET << std::endl;
+
     return;
 }
 
@@ -61,6 +66,10 @@ bool TomasulosCPU::Cycle()
     adder->Cycle();
     loadStoreUnit->Cycle();
     bool decodeStalled = decoder->Cycle(cycles);
+
+    // Keep track of how many cycles we stall on
+    if (decodeStalled)
+        stalls++;
 
     // If decode didnt stall then it's safe to increase the PC
     // Dont increase if we have reached the end of the program
@@ -73,6 +82,12 @@ bool TomasulosCPU::Cycle()
     if (debug)
     {
         std::cout << " ============= TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << " =========================================================================" << std::endl;
+
+        if (decodeStalled)
+        {
+            std::cout << TERMINAL_RED << "Stalled!!" << TERMINAL_RESET << std::endl;
+        }
+
         std::cout << "------- Decoder: " << std::endl;
         decoder->print();
         std::cout << TERMINAL_RESET << "------- Adder: " << TERMINAL_GREEN << std::endl;

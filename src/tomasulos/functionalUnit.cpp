@@ -134,6 +134,7 @@ void AdderUnit::Cycle()
     }
 
     // Otherwise, execute
+    std::cout << "Adder unit took tag " << toExecute->tag << std::endl;
 
     // Mark as busy so it ccant be fetched again this cycle
     toExecute->busy = true;

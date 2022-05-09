@@ -38,7 +38,11 @@
 class TomasulosCPU
 {
 public:
-    int32_t cycles;
+    // Stats to record
+    int32_t cycles;   // How many cycles the processor took to execute the program
+    int32_t stalls;   // How many cycles the processor was stalled during execution
+    int32_t mean_ipc; // Average (Mean) instructions per cycle
+
     runnable_program *program;
     int32_t memorySize;
     int32_t *memory;
