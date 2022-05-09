@@ -37,11 +37,15 @@
 
 class TomasulosCPU
 {
+private:
+    int32_t numberOfInstructionsCommittedThisCycle = 0;
+
 public:
     // Stats to record
-    int32_t cycles;   // How many cycles the processor took to execute the program
-    int32_t stalls;   // How many cycles the processor was stalled during execution
-    int32_t mean_ipc; // Average (Mean) instructions per cycle
+    int32_t cycles;                      // How many cycles the processor took to execute the program
+    int32_t stalls;                      // How many cycles the processor was stalled during execution
+    float mean_ipc;                      // Average (Mean) instructions per cycle
+    int32_t total_executed_instructions; // Number of instrucitons executed (committed to cdb) over the entire execution
 
     runnable_program *program;
     int32_t memorySize;

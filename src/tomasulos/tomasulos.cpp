@@ -7,6 +7,9 @@
 
 TomasulosCPU::TomasulosCPU(runnable_program *prog, int32_t _memorySize)
 {
+    stalls = 0;
+    mean_ipc = 0;
+    total_executed_instructions = 0;
     cycles = 0;
     program = prog;
     memorySize = _memorySize;
@@ -21,10 +24,7 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, int32_t _memorySize)
     // Create functional units
     adder = new AdderUnit(memory, cdb, reservationStationTable, "ADDER", rob, ADDER);
     loadStoreUnit = new LoadStoreUnit(memory, cdb, reservationStationTable, "LS", rob, LOAD_STORE);
-
     decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob);
-
-    std::cout << "TomasulosCPU halted" << std::endl;
 }
 
 void TomasulosCPU::Run(int speed, bool step)
@@ -45,16 +45,24 @@ void TomasulosCPU::Run(int speed, bool step)
 
         bool halt = Cycle();
 
+        // Record Stats
+        total_executed_instructions += rob->committedThisCycle;
+
         if (halt)
             break;
     }
 
     // TODO Print pretty stats here
-    std::cout << TERMINAL_RED << "Program Halting!" << TERMINAL_RESET << std::endl;
-    std::cout << TERMINAL_CYAN << "===== " << TERMINAL_MAGENTA << "Stats!" << TERMINAL_CYAN << " =====" << TERMINAL_RESET << std::endl;
-    std::cout << TERMINAL_GREEN << "Cycles:\t" << cycles << TERMINAL_RESET << std::endl;
-    std::cout << TERMINAL_RED << "Stalls:\t" << cycles << TERMINAL_RESET << std::endl;
-    std::cout << TERMINAL_BLUE << "IPC:\t" << mean_ipc << TERMINAL_RESET << std::endl;
+    IF_DEBUG(std::cout << TERMINAL_RED << "Program Halting!" << TERMINAL_RESET << std::endl);
+
+    // Final stats calculations
+    mean_ipc = (float)total_executed_instructions / (float)cycles;
+
+    std::cout << TERMINAL_GREEN << "Done!" << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_CYAN << "===== " << TERMINAL_MAGENTA << "Stats!" << TERMINAL_CYAN << " =====" << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_GREEN << "Cycles:\t" << TERMINAL_GREEN << cycles << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_RED << "Stalls:\t" << TERMINAL_RED << stalls << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_BLUE << "IPC:\t" << TERMINAL_BLUE << mean_ipc << TERMINAL_RESET << std::endl;
 
     return;
 }

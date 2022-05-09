@@ -24,7 +24,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
     // If PC not valid then stall
     if (!registerStatusTable->getRegValid(PC))
     {
-        std::cout << "Stalling!" << std::endl;
+        IF_DEBUG(std::cout << "Stalling!" << std::endl);
         stalled = true;
         return stalled;
     }
@@ -78,11 +78,11 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
                     rs->empty = false;
                     foundFreeReservationStation = true;
 
-                    std::cout << "Found empty RS with tag: " << rs->tag << std::endl;
+                    IF_DEBUG(std::cout << "Found empty RS with tag: " << rs->tag << std::endl);
                 }
                 else
                 {
-                    std::cout << currentRS->tag << " not empty" << std::endl;
+                    IF_DEBUG(std::cout << currentRS->tag << " not empty" << std::endl);
                 }
 
                 if (foundFreeReservationStation)
@@ -110,7 +110,6 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         if (source1Valid)
         {
             source1Val = registerStatusTable->getRegValue(rs1);
-            std::cout << "source1val: " << source1Val << std::endl;
             source1Tag = "";
         }
         else
@@ -140,7 +139,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         // Push into ReorderBuffer
         ReorderBufferEntry *robEntry = new ReorderBufferEntry(opcode, rs->tag, -1, -1, -1, pcValue);
         int32_t robReference = rob->push(robEntry);
-        std::cout << "ROB REF IS " << robReference << std::endl;
+        IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
         if (robReference == -1) // ROB was full, stall
         {
             stalled = true;
@@ -150,7 +149,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         // Set reservation station values
         rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference, cpuCycle);
 
-        std::cout << "ROB SET IS " << rs->robIndex << std::endl;
+        IF_DEBUG(std::cout << "ROB SET IS " << rs->robIndex << std::endl);
 
         // Set destination register tag to reservation station tag, and mark invalid
         // but as a special case dont do this for x0 - x0 should never change

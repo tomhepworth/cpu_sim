@@ -48,7 +48,7 @@ int32_t ReorderBuffer::push(ReorderBufferEntry *entry)
     head = (head + 1) % max;
     count++;
 
-    std::cout << "rob returning " << entryIndex << std::endl;
+    IF_DEBUG(std::cout << "rob returning " << entryIndex << std::endl);
     return entryIndex;
 }
 
@@ -124,6 +124,7 @@ On a cycle the ROB shoud...
 */
 void ReorderBuffer::Cycle()
 {
+    committedThisCycle = 0;
     // Should never have a negative number of elements
     assert(count >= 0);
 
@@ -136,12 +137,12 @@ void ReorderBuffer::Cycle()
 
     if (oldest->valid)
     {
-        std::cout << "ROB COMMITTING TAG : " << oldest->destinationTag << std::endl;
+        IF_DEBUG(std::cout << "ROB COMMITTING TAG : " << oldest->destinationTag << std::endl);
 
         // If we are committing a halt, end everything
         if (oldest->op == HLT)
         {
-            std::cout << "HALT EXCEPTION COMMITTING! " << std::endl;
+            IF_DEBUG(std::cout << "HALT EXCEPTION COMMITTING! " << std::endl);
             exit(0);
         }
 
@@ -167,13 +168,14 @@ void ReorderBuffer::Cycle()
             and the RAW memory dependencies shouldnt show up in the RST
         */
 
-        pop(); // Pop instruction out of the ROB, dont bother using the result
+        pop();                // Pop instruction out of the ROB, dont bother using the result
+        committedThisCycle++; // Increment this every time we commit something
     }
 }
 
 void ReorderBuffer::updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
 {
-    std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl;
+    IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl);
     bool success = false;
     for (int i = 0; i < max; i++)
     {

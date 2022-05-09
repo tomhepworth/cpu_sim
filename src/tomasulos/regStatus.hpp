@@ -50,7 +50,7 @@ public:
             entries.push_back(entry);
         }
 
-        std::cout << "dont forget to set cdb!" << std::endl;
+        IF_DEBUG(std::cout << "dont forget to set cdb!" << std::endl);
     }
 
     TAG getRegTag(REGISTER_ABI_NAME i)

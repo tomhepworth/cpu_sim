@@ -60,7 +60,8 @@ void ReservationStationTable::print()
 
 void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG _s2, int32_t _v2, int32_t _imm, int32_t _pc, int32_t _rob_index, int32_t _insertionCycle)
 {
-    std::cout << "SETTING RS OF TAG " << tag << std::endl;
+    IF_DEBUG(std::cout << "SETTING RS OF TAG " << tag << std::endl);
+
     empty = false;
     busy = false;
     valid = _valid;
@@ -77,7 +78,8 @@ void ReservationStation::set(bool _valid, OPCODE _op, TAG _s1, int32_t _v1, TAG 
 
 void ReservationStation::clear()
 {
-    std::cout << "clear was called on RS: " << tag << std::endl;
+    IF_DEBUG(std::cout << "clear was called on RS: " << tag << std::endl);
+
     empty = true;
     valid = false; // empty does not mean ready to execute
     operation = NOP;

@@ -256,7 +256,7 @@ bool parse(std::string filename, runnable_program *prog)
 
                     bool setImm = parseImmediateValue(&imm, words[3], instructionNumber);
 
-                    std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
+                    // std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
 
                     i = new Instruction_B(opcode, rs1, rs2, imm);
                     if (!setImm)

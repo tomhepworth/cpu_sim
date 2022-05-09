@@ -36,6 +36,8 @@ public:
     int tail;
     bool full;
 
+    int32_t committedThisCycle; // Just used for stats
+
     CommonDataBus *cdb;
     int32_t *memory;
 

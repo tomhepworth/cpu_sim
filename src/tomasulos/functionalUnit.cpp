@@ -7,16 +7,14 @@ int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t 
     {
     case LW:
         res = memory[address];
-        if (debug)
-            std::cout << "-- Loaded " << res << " from address " << address << std::endl;
+        IF_DEBUG(std::cout << "-- Loaded " << res << " from address " << address << std::endl);
 
         break;
     case SW:
         memory[address] = value;
         res = value;
 
-        if (debug)
-            std::cout << "-- Stored " << value << " into address " << address << std::endl;
+        IF_DEBUG(std::cout << "-- Stored " << value << " into address " << address << std::endl);
         break;
     default:
         break;
@@ -33,7 +31,6 @@ TomasuloFunctionalUnit::TomasuloFunctionalUnit(int32_t *_memory, CommonDataBus *
     tag = _tag;
     memory = _memory;
 
-    std::cout << "my tag is... " << tag << std::endl;
     type = _type;
     reservationStations = new DistributedReservationStation(rst, RESERVATION_STATION_BUFFER_SIZE, tag, type, cdb);
 
@@ -133,8 +130,7 @@ void AdderUnit::Cycle()
         return;
     }
 
-    // Otherwise, execute
-    std::cout << "Adder unit took tag " << toExecute->tag << std::endl;
+    // Otherwise, execute:
 
     // Mark as busy so it ccant be fetched again this cycle
     toExecute->busy = true;
