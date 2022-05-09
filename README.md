@@ -55,3 +55,7 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 # Libraries used:
 
 -   Catch2 (unit tests): https://github.com/catchorg/Catch2
+
+# Notes
+
+-   Collatz benchmark running with tomasulos, first test = 79 cycles

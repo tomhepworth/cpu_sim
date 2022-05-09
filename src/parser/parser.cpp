@@ -103,7 +103,7 @@ bool parseImmediateValue(int32_t *imm, std::string imm_str, int instructionNumbe
             *imm = instructionNumber; // Store instruction numeber in imm so that it can be used to calculate the relative address when the label is found
         }
     }
-    std::cout << "imm for \"" << imm_str << "\" on Instruction-line " << instructionNumber << " is " << imm << std::endl;
+    // std::cout << "imm for \"" << imm_str << "\" on Instruction-line " << instructionNumber << " is " << *imm << std::endl;
     return ret;
 }
 
@@ -256,7 +256,7 @@ bool parse(std::string filename, runnable_program *prog)
 
                     bool setImm = parseImmediateValue(&imm, words[3], instructionNumber);
 
-                    std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
+                    // std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
 
                     i = new Instruction_B(opcode, rs1, rs2, imm);
                     if (!setImm)

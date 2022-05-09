@@ -1,7 +1,7 @@
 // This program adds 5 to 3 as a demo of my assembly language and ISA, and as a test for the CPU
 // Parser supports comments and empty lines
 
-// Load 5 into t0 - note zero and x0 are the same
+// Load 5 into t3 - note zero and x0 are the same
 addi t3, zero, 5
 
 // Load 3 into t1 - note spaces betweem args are optional

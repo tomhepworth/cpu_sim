@@ -3,7 +3,7 @@ CFLAGS = -g -Wall -std=c++11
 SOURCE_DIR := src
 BUILD_DIR := build
 TEST_LIBS := src/libs/catch/
-VPATH = src/ src/parser/ src/isa/ src/cpu/ src/tests/ src/debug/
+VPATH = src/ src/parser/ src/isa/ src/cpu/ src/tests/ src/debug/ src/tomasulos
 
 #cppclean --include-path=src/ --include-path=src/parser/ --include-path=src/isa/ --include-path=src/cpu/ --include-path=src/tests/ --include-path=src/debug/ .
 
@@ -18,7 +18,7 @@ HEADER_INCLUDES = $(addprefix -I, $(VPATH))
 
 all: dir simulator test
 sim: dir simulator
-test: dir tests
+test: dir testscalar testooo
 
 run: all
 	./test
@@ -30,9 +30,14 @@ simulator: $(CPP_OBJS) $(BUILD_DIR)/main.o
 
 
 # For building tests include testing library (catch2), add flags for test mode, and set build output directory
-tests: HEADER_INCLUDES += -Isrc/libs/catch/
-tests: $(CPP_OBJS) $(BUILD_DIR)/test.o
-	$(COMPILER) $(CFLAGS) -o test $^ $(HEADER_INCLUDES)
+testscalar: HEADER_INCLUDES += -Isrc/libs/catch/
+testscalar: $(CPP_OBJS) $(BUILD_DIR)/test_scalar.o
+	$(COMPILER) $(CFLAGS) -o scalartest $^ $(HEADER_INCLUDES)
+
+testooo: HEADER_INCLUDES += -Isrc/libs/catch/
+testooo: $(CPP_OBJS) $(BUILD_DIR)/test_ooo.o
+	$(COMPILER) $(CFLAGS) -o oootest $^ $(HEADER_INCLUDES)
+
 
 
 # Build object files from cpp files

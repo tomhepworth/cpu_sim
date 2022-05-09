@@ -1,0 +1,4 @@
+add t3 t1 t2
+add t5 t3 t4
+add t1 t2 t4
+hlt

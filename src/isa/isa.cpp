@@ -32,7 +32,7 @@ void Instruction::printSomething()
 
 int32_t PerformALUOperation(OPCODE opcode, int32_t PC, int32_t val1, int32_t val2, int32_t imm)
 {
-    int32_t result;
+    int32_t result = 0;
     switch (opcode)
     {
     case ADD:
