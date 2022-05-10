@@ -93,7 +93,7 @@ bool TomasulosCPU::Cycle()
 
     if (debug)
     {
-        std::cout << " ============= TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << " =========================================================================" << std::endl;
+        std::cout << " ============= TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << "  PC PHYSICAL: " << physicalRegisters[PC] << " =========================================================================" << std::endl;
 
         if (decodeStalled)
         {

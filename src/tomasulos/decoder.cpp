@@ -82,11 +82,11 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
                     rs->empty = false;
                     foundFreeReservationStation = true;
 
-                    IF_DEBUG(std::cout << "Found empty RS with tag: " << rs->tag << std::endl);
+                    // IF_DEBUG(std::cout << "Found empty RS with tag: " << rs->tag << std::endl);
                 }
                 else
                 {
-                    IF_DEBUG(std::cout << currentRS->tag << " not empty" << std::endl);
+                    // IF_DEBUG(std::cout << currentRS->tag << " not empty" << std::endl);
                 }
 
                 if (foundFreeReservationStation)
@@ -144,7 +144,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         ReorderBufferEntry *robEntry = new ReorderBufferEntry(opcode, rs->tag, -1, -1, -1, pcValue, rd);
         int32_t robReference = rob->push(robEntry);
 
-        IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
+        // IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
 
         if (robReference == -1) // ROB was full, stall
         {
@@ -156,7 +156,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         // Set reservation station values
         rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference, cpuCycle);
 
-        IF_DEBUG(std::cout << "ROB SET IS " << rs->robIndex << std::endl);
+        // IF_DEBUG(std::cout << "ROB SET IS " << rs->robIndex << std::endl);
 
         // Set destination register tag to reservation station tag, and mark invalid
         // - as a special case dont do this for x0 - x0 should never change

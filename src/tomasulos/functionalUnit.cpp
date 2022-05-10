@@ -8,14 +8,14 @@ int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t 
     {
     case LW:
         res = memory[address];
-        IF_DEBUG(std::cout << "-- Loaded " << res << " from address " << address << std::endl);
+        // IF_DEBUG(std::cout << "-- Loaded " << res << " from address " << address << std::endl);
 
         break;
     case SW:
         memory[address] = value;
         res = value;
 
-        IF_DEBUG(std::cout << "-- Stored " << value << " into address " << address << std::endl);
+        // IF_DEBUG(std::cout << "-- Stored " << value << " into address " << address << std::endl);
         break;
     default:
         break;

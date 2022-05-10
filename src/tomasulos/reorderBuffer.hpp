@@ -44,9 +44,9 @@ public:
     TomasulosCPU *cpu; // Just used to trigger flush
     CommonDataBus *cdb;
     int32_t *memory;
-    int32_t *physialRegisters;
+    int32_t *physicalRegisters;
 
-    ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *physialRegisters, TomasulosCPU *_cpu);
+    ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *physicalRegisters, TomasulosCPU *_cpu);
 
     // Add an entry to the ROB, return its index to be used as a reference to it
     int32_t push(ReorderBufferEntry *entry);

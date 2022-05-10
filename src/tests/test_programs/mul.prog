@@ -1,5 +1,6 @@
 // Compute x*y - on 20/2/22 this took 56 cycles
-// With single scale tomasulus on 9/5/22 (first test) it took 26 cycles
+// With single scale tomasulus on 9/5/22 (first test) it took 26 cycles, adding speculative execution reduced this to 23 (10/5/22)
+
 
 // Load x and y to registers
 addi t0, x0, 5

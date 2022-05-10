@@ -25,7 +25,7 @@ ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, i
     cpu = _cpu;
     cdb = _cdb;
     memory = _memory;
-    physialRegisters = _physicalRegisters;
+    physicalRegisters = _physicalRegisters;
     max = _size;
     full = false;
     tail = 0;
@@ -52,7 +52,6 @@ int32_t ReorderBuffer::push(ReorderBufferEntry *entry)
     head = (head + 1) % max;
     count++;
 
-    IF_DEBUG(std::cout << "rob returning " << entryIndex << std::endl);
     return entryIndex;
 }
 
@@ -152,7 +151,7 @@ void ReorderBuffer::Cycle()
     while (oldest->valid)
     {
 
-        IF_DEBUG(std::cout << "ROB COMMITTING TAG : " << oldest->destinationTag << std::endl);
+        // IF_DEBUG(std::cout << "ROB COMMITTING TAG : " << oldest->destinationTag << std::endl);
 
         // If we are committing a halt, end everything
         if (oldest->op == HLT)
@@ -162,7 +161,7 @@ void ReorderBuffer::Cycle()
         }
 
         // BRANCH HANDLING
-        bool needToFlush = false;
+        bool flushed = false;
         if (oldest->physicalRegisterDestination == PC) // RD is PC only for branch instructions
         {
             if (oldest->destinationVal == oldest->PCValue + 1)
@@ -170,13 +169,13 @@ void ReorderBuffer::Cycle()
                 // BRANCH NOT TAKEN
                 IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
                 // We speculate by always taking branches, so this means we need to flush...
-                needToFlush = true;
 
                 // This means:
                 //      - everything in the ROB newer than this instruction is invalidated and can be deleted
                 //      - all the functional units should be cleared
                 //      - all the reservation stations should be cleared
                 triggerFlush();
+                flushed = true;
             }
             else
             {
@@ -194,8 +193,13 @@ void ReorderBuffer::Cycle()
             memory[oldest->storeAddr] = oldest->storeData;
             break;
         default:
-            // Update physical register file
-            physialRegisters[oldest->physicalRegisterDestination] = oldest->destinationVal;
+            /*
+                Update physical register file, except if we have flushed and rd == pc
+                We will only have flushed if rd = PC. If we didnt flush then the speculative execution was correct, so no need to change the PC.
+            */
+            if (!(!flushed && oldest->physicalRegisterDestination == PC))
+                physicalRegisters[oldest->physicalRegisterDestination] = oldest->destinationVal;
+
             break;
         }
 
@@ -221,7 +225,7 @@ void ReorderBuffer::Cycle()
 
 void ReorderBuffer::updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
 {
-    IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl);
+    // IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl);
 
     bool success = false;
     for (int i = 0; i < max; i++)
