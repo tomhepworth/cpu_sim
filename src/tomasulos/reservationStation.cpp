@@ -21,6 +21,18 @@ ReservationStation::ReservationStation(TAG masterTag, int32_t i, CommonDataBus *
     operation = NOP;
 }
 
+void ReservationStationTable::flush()
+{
+    // Clear all the reservation stations
+    for (auto group : this->stationGroups)
+    {
+        for (auto rs : group->stations)
+        {
+            rs->clear();
+        }
+    }
+}
+
 ReservationStation *ReservationStationTable::findByTag(TAG tag)
 {
     ReservationStation *ret = nullptr;

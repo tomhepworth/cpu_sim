@@ -2,6 +2,7 @@
 
 bool debug = false;
 bool step = false;
+std::string stallReason = "";
 
 std::map<std::string, OPCODE> opcodeStringMap = {
     {"add", ADD},

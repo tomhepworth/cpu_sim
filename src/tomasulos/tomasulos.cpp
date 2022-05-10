@@ -14,17 +14,20 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, int32_t _memorySize)
     program = prog;
     memorySize = _memorySize;
     memory = (int32_t *)calloc(memorySize, sizeof(int32_t));
+    physicalRegisters = (int32_t *)calloc(REGABI_UNUSED, sizeof(int32_t));
 
     reservationStationTable = new ReservationStationTable();
     registerStatusTable = new RegisterStatusTable();
     cdb = new CommonDataBus(reservationStationTable, registerStatusTable);
     registerStatusTable->cdb = cdb; // messy but necessary
-    rob = new ReorderBuffer(16, cdb, memory);
+    registerStatusTable->physicalRegisters = physicalRegisters;
+
+    rob = new ReorderBuffer(16, cdb, memory, physicalRegisters, this);
 
     // Create functional units
-    adder = new AdderUnit(memory, cdb, reservationStationTable, "ADDER", rob, ADDER);
-    loadStoreUnit = new LoadStoreUnit(memory, cdb, reservationStationTable, "LS", rob, LOAD_STORE);
-    decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob);
+    adder = new AdderUnit(physicalRegisters, memory, cdb, reservationStationTable, "ADDER", rob, ADDER);
+    loadStoreUnit = new LoadStoreUnit(physicalRegisters, memory, cdb, reservationStationTable, "LS", rob, LOAD_STORE);
+    decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob, physicalRegisters);
 }
 
 void TomasulosCPU::Run(int speed, bool step)
@@ -81,10 +84,11 @@ bool TomasulosCPU::Cycle()
 
     // If decode didnt stall then it's safe to increase the PC
     // Dont increase if we have reached the end of the program
-    int32_t currentPCValue = registerStatusTable->getRegValue(PC);
+    int32_t currentPCValue = physicalRegisters[PC];
     if (!decodeStalled && currentPCValue < program->size() - 1)
     {
         registerStatusTable->setRegValue(PC, currentPCValue + 1);
+        physicalRegisters[PC] = currentPCValue + 1;
     }
 
     if (debug)
@@ -93,7 +97,7 @@ bool TomasulosCPU::Cycle()
 
         if (decodeStalled)
         {
-            std::cout << TERMINAL_RED << "Stalled!!" << TERMINAL_RESET << std::endl;
+            std::cout << TERMINAL_RED << "Stalled!! Reason:" << stallReason << TERMINAL_RESET << std::endl;
         }
 
         std::cout << "------- Decoder: " << std::endl;
@@ -138,4 +142,22 @@ void TomasulosCPU::memDump()
         }
         std::cout << std::endl;
     }
+}
+
+void TomasulosCPU::flush()
+{
+    // Triggered by ROB, which flushes itself
+
+    // Flush all FU's
+    adder->flush();
+    loadStoreUnit->flush();
+    decoder->flush();
+
+    // Flush all reservation stations
+    reservationStationTable->flush();
+
+    // Remove all tags from TST and reset values to their physical ones
+    registerStatusTable->flush();
+
+    return;
 }

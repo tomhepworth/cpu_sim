@@ -1,4 +1,5 @@
 #include "functionalUnit.hpp"
+#include "isa.h"
 
 int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t address, int32_t value)
 {
@@ -22,7 +23,96 @@ int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t 
     return res;
 }
 
-TomasuloFunctionalUnit::TomasuloFunctionalUnit(int32_t *_memory, CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type)
+int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, int32_t PCValue, int32_t val1, int32_t val2, int32_t imm)
+{
+    int32_t result = 0;
+    switch (opcode)
+    {
+    case ADD:
+        result = val1 + val2;
+        break;
+    case LW: // Loads and stores need to add offset to rs2
+    case SW:
+        result = val2 + imm;
+        break;
+    case ADDI:
+        result = val1 + imm;
+        break;
+    case SUB:
+        result = val1 - val2;
+        break;
+    case SLL:
+        result = val1 << val2;
+        break;
+    case SRL:
+        result = val1 >> val2;
+        break;
+    case AND:
+        result = val1 & val2;
+        break;
+    case OR:
+        result = val1 | val2;
+        break;
+    case XOR:
+        result = val1 ^ val2;
+        break;
+
+    // For branching instructions, check condition and if met compute PC + imm (pc is current instructions pc value)
+    case BEQ:
+        if (val1 == val2)
+        {
+            result = PCValue + imm;
+            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+        }
+        else
+        {
+            result = PCValue + 1;
+        }
+
+        break;
+    case BNE:
+        if (val1 != val2)
+        {
+            result = PCValue + imm;
+            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+        }
+        else
+        {
+            result = PCValue + 1;
+        }
+        break;
+    case BLT:
+        if (val1 < val2)
+        {
+            result = PCValue + imm;
+            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+        }
+        else
+        {
+            result = PCValue + 1;
+            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+        }
+        break;
+    case BGE:
+        if (val1 >= val2)
+        {
+            result = PCValue + imm;
+            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+        }
+        else
+        {
+            result = PCValue + 1;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return result;
+}
+
+TomasuloFunctionalUnit::TomasuloFunctionalUnit(int32_t *_physicalRegisters, int32_t *_memory, CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type)
 {
     rob = _rob;
     cdb = _cdb;
@@ -40,6 +130,7 @@ TomasuloFunctionalUnit::TomasuloFunctionalUnit(int32_t *_memory, CommonDataBus *
     imm = 0;
 
     phase = ADDR_CALC;
+    physicalRegisters = _physicalRegisters;
 }
 
 void LoadStoreUnit::Cycle()
@@ -100,6 +191,21 @@ void LoadStoreUnit::Cycle()
     }
 }
 
+void LoadStoreUnit::flush()
+{
+    // Clear all values to defaults
+    toExecute = nullptr;
+    opcode = NOP;
+    rs1Val = 0;
+    rs2Val = 0;
+    imm = 0;
+    pcValue = 0;
+    calculatedAddress = 0;
+
+    // Reset phase
+    phase = ADDR_CALC;
+}
+
 void LoadStoreUnit::print()
 {
     // std::cout << "TAG\t" << tag << std::endl;
@@ -145,10 +251,16 @@ void AdderUnit::Cycle()
     TAG resultTag = toExecute->tag;
 
     // TODO carry though instructions PC value or branches wont work
-    int32_t result = PerformALUOperation(opcode, pcValue, rs1Val, rs2Val, imm);
+    int32_t result = TomasulosPerformALUOperation(physicalRegisters, opcode, pcValue, rs1Val, rs2Val, imm);
 
     // update ROB
     rob->updateField(opcode, resultTag, result, -1, -1, true, false);
+}
+
+void AdderUnit::flush()
+{
+    opcode = NOP;
+    rs1Val = rs2Val = imm = pcValue = 0;
 }
 
 void AdderUnit::print()

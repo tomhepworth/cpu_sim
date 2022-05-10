@@ -50,6 +50,7 @@ public:
     runnable_program *program;
     int32_t memorySize;
     int32_t *memory;
+    int32_t *physicalRegisters;
     CommonDataBus *cdb;
     ReservationStationTable *reservationStationTable;
     RegisterStatusTable *registerStatusTable;
@@ -71,6 +72,8 @@ public:
     bool Cycle();
 
     void memDump();
+
+    void flush();
 };
 
 #endif

@@ -1,0 +1,13 @@
+// DOES NOT TERMINATE - DONT USE IN UNIT TEST
+
+loop:
+//Load to take up 2 cycles
+lw t0, sp, 0
+
+// branch that will always branch
+beq t0, t0, loop
+
+// Should never get here unless speculating
+addi t1, x0, 1
+addi t2, x0, 2
+hlt

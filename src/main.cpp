@@ -3,6 +3,8 @@
 #include <string>
 #include <getopt.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "main.h"
 #include "isa.h"
 #include "parser.h"
@@ -23,34 +25,54 @@ int main(int argc, char *const argv[])
 
     int opt;
     std::string filename;
-    while ((opt = getopt(argc, argv, "-:s:m:dt")) != -1)
+
+    int option_index = 0;
+    static struct option long_options[] = {{"mode", required_argument, NULL, 0}, {"program", required_argument, NULL, 0}};
+
+    while ((opt = getopt_long(argc, argv, "s:m:dt", long_options, &option_index)) != -1)
     {
         switch (opt)
         {
-        case 1:
-            printf("Path: %s\n", optarg);
-            filename = optarg;
-            break;
+        case 0:
+
+            // LONG ARGUMENTS  Switch by index
+            switch (option_index)
+            {
+            case 0: // mode
+
+                if (strcmp(optarg, "ooo") == 0)
+                {
+                    mode = TOMASULOS;
+                }
+                else if (strcmp(optarg, "scalar") == 0)
+                {
+                    std::cout << TERMINAL_BLUE << "Mode:\tSCALAR" << TERMINAL_RESET << std::endl;
+                    mode = SCALAR;
+                }
+
+                break;
+            case 1: // program (filepath)
+                filename = optarg;
+                break;
+            default:
+                break;
+            }
+
         case 's':
-            printf("Speed: %s\n", optarg);
             cpu_speed = atoi(optarg);
             break;
         case 'm':
-            printf("Memory Size: %s\n", optarg);
             memSize = atoi(optarg);
             break;
         case 'd':
-            printf("Debug Enabled\n");
             debug = true;
             break;
         case 't':
-            printf("Step mode enabled\n");
             step = true;
         }
     }
 
     // Parse
-    printf("Parsing: %s\n", filename.c_str());
     runnable_program *program = new runnable_program;
 
     bool parsingSuccess = parse(filename, program);
@@ -58,6 +80,13 @@ int main(int argc, char *const argv[])
     {
         exit(EXIT_FAILURE);
     }
+
+    std::cout << TERMINAL_GREEN << "Successfully Read:\t" << filename.c_str() << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BLUE << "Mode:\t" << ((mode == TOMASULOS) ? "ooo" : "scalar") << TERMINAL_RESET << std::endl;
+    // std::cout << TERMINAL_BLUE << "Speed: " << cpu_speed << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_YELLOW << "Memory Size: " << memSize << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_CYAN << "Debug Mode:\t" << ((debug) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_MAGENTA << "Step mode:\t" << ((step) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
 
     if (mode == SCALAR)
     {
@@ -118,7 +147,6 @@ int main(int argc, char *const argv[])
     }
     else if (mode == TOMASULOS)
     {
-        std::cout << "Mode: TOMASULOS" << std::endl;
         TomasulosCPU *cpu = new TomasulosCPU(program, memSize);
 
         cpu->Run(cpu_speed, step);
@@ -127,6 +155,8 @@ int main(int argc, char *const argv[])
     {
         std::cout << "UNKNOWN MODE - exiting" << std::endl;
     }
+
+    std::cout << "STEP WAS: " << step << std::endl;
 
     return 0;
 }

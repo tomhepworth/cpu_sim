@@ -89,6 +89,8 @@ public:
 
     ReservationStation *findByTag(TAG tag);
 
+    void flush();
+
     // True if all reservation stations are marked as empty
     bool allStationsEmpty();
 

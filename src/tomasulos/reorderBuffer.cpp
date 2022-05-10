@@ -1,8 +1,9 @@
 #include "reorderBuffer.hpp"
+#include "tomasulo.hpp"
 #include "debug_utils.h"
 #include <iostream>
 
-ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t _destinationVal, int32_t _storeAddr, int32_t _storeData, int32_t _PCValue)
+ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t _destinationVal, int32_t _storeAddr, int32_t _storeData, int32_t _PCValue, REGISTER_ABI_NAME _physicalRegisterDestination)
 {
     op = _op;
     destinationTag = _destinationTag;
@@ -11,17 +12,20 @@ ReorderBufferEntry::ReorderBufferEntry(OPCODE _op, TAG _destinationTag, int32_t 
     storeData = _storeData;
     PCValue = _PCValue;
     valid = false;
+    physicalRegisterDestination = _physicalRegisterDestination;
 };
 
 void ReorderBufferEntry::print()
 {
-    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t\t" << storeAddr << "\t\t" << storeData << "\t" << PCValue << "\t" << valid; // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
+    std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t\t" << storeAddr << "\t\t" << storeData << "\t" << PCValue << "\t" << valid << "\t" << getStringFromRegName(physicalRegisterDestination); // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
 }
 
-ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory)
+ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *_physicalRegisters, TomasulosCPU *_cpu)
 {
+    cpu = _cpu;
     cdb = _cdb;
     memory = _memory;
+    physialRegisters = _physicalRegisters;
     max = _size;
     full = false;
     tail = 0;
@@ -59,7 +63,7 @@ ReorderBufferEntry *ReorderBuffer::pop()
     if (count == 0)
     {
         // Empty cant pop
-        ret = new ReorderBufferEntry(NOP, "EMPTY", -1, -1, -1, -1);
+        ret = new ReorderBufferEntry(NOP, "EMPTY", -1, -1, -1, -1, REGABI_UNUSED);
         ret->ROBemptyFlag = true;
         return ret;
     }
@@ -77,7 +81,7 @@ ReorderBufferEntry *ReorderBuffer::pop()
 
 void ReorderBuffer::print()
 {
-    std::cout << "OP\tDEST_TAG\tDEST_VAL\tSTO_ADDR\tSTO_VAL\tPC\tVALID\t HEAD: " << head << "\tTAIL: " << tail << "\tCOUNT: " << count << std::endl;
+    std::cout << "OP\tDEST_TAG\tDEST_VAL\tSTO_ADDR\tSTO_VAL\tPC\tVALID\tPHYS\tHEAD: " << head << "\tTAIL: " << tail << "\tCOUNT: " << count << std::endl;
     for (int i = 0; i < max; i++)
     {
         // std::cout << " i is " << i << std::endl;
@@ -114,6 +118,15 @@ void ReorderBuffer::print()
     }
 }
 
+void ReorderBuffer::triggerFlush()
+{
+    cpu->flush();
+
+    while (count > 0)
+        pop();
+
+    return;
+}
 /*
 On a cycle the ROB shoud...
 
@@ -135,8 +148,10 @@ void ReorderBuffer::Cycle()
     // Look at oldest instruction
     ReorderBufferEntry *oldest = buffer[tail];
 
-    if (oldest->valid)
+    // Commit ready instructions in order until there are no more
+    while (oldest->valid)
     {
+
         IF_DEBUG(std::cout << "ROB COMMITTING TAG : " << oldest->destinationTag << std::endl);
 
         // If we are committing a halt, end everything
@@ -144,6 +159,30 @@ void ReorderBuffer::Cycle()
         {
             IF_DEBUG(std::cout << "HALT EXCEPTION COMMITTING! " << std::endl);
             exit(0);
+        }
+
+        // BRANCH HANDLING
+        bool needToFlush = false;
+        if (oldest->physicalRegisterDestination == PC) // RD is PC only for branch instructions
+        {
+            if (oldest->destinationVal == oldest->PCValue + 1)
+            {
+                // BRANCH NOT TAKEN
+                IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
+                // We speculate by always taking branches, so this means we need to flush...
+                needToFlush = true;
+
+                // This means:
+                //      - everything in the ROB newer than this instruction is invalidated and can be deleted
+                //      - all the functional units should be cleared
+                //      - all the reservation stations should be cleared
+                triggerFlush();
+            }
+            else
+            {
+                // BRANCH WAS TAKEN
+                IF_DEBUG(std::cout << "ROB: BRANCH WAS TAKEN" << std::endl);
+            }
         }
 
         // Commit on cdb, or for stores, write to memory
@@ -155,7 +194,8 @@ void ReorderBuffer::Cycle()
             memory[oldest->storeAddr] = oldest->storeData;
             break;
         default:
-            // Anything other than stores just needs to be broadcast on CDB
+            // Update physical register file
+            physialRegisters[oldest->physicalRegisterDestination] = oldest->destinationVal;
             break;
         }
 
@@ -170,12 +210,19 @@ void ReorderBuffer::Cycle()
 
         pop();                // Pop instruction out of the ROB, dont bother using the result
         committedThisCycle++; // Increment this every time we commit something
+
+        oldest = buffer[tail];
+
+        // Do nothing if empty
+        if (count == 0)
+            return;
     }
 }
 
 void ReorderBuffer::updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
 {
     IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl);
+
     bool success = false;
     for (int i = 0; i < max; i++)
     {

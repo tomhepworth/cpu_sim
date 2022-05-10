@@ -8,7 +8,7 @@
 #include "cpu.h"
 
 int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t address, int32_t value);
-;
+
 class TomasuloFunctionalUnit
 {
 public:
@@ -20,6 +20,7 @@ public:
     ReservationStation *toExecute;
     ReorderBuffer *rob;
     int32_t *memory;
+    int32_t *physicalRegisters;
 
     OPCODE opcode;
     int32_t rs1Val;
@@ -35,7 +36,7 @@ public:
     };
     int phase;
 
-    TomasuloFunctionalUnit(int32_t *_memory, CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type);
+    TomasuloFunctionalUnit(int32_t *_physicalRegisters, int32_t *_memory, CommonDataBus *_cdb, ReservationStationTable *_rst, TAG _tag, ReorderBuffer *_rob, RESERVATION_STATION_TYPE _type);
 };
 
 class LoadStoreUnit : public TomasuloFunctionalUnit
@@ -59,6 +60,7 @@ public:
 
     /* Take from load store queue (res station), calculate address, do the load/store, pass to CDB for committing*/
     void Cycle();
+    void flush();
 
     void print();
 };
@@ -73,6 +75,7 @@ public:
      Take ready instruction from reservation stations, execute it, pass completed to CDB
     */
     void Cycle();
+    void flush();
 
     void print();
 };

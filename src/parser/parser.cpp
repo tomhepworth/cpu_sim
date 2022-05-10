@@ -7,6 +7,7 @@
 
 #include "parser.h"
 #include "instruction.h"
+#include "debug_utils.h"
 
 std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap = {
     {"add", std::make_pair(ADD, R)},
@@ -113,6 +114,12 @@ bool parse(std::string filename, runnable_program *prog)
     std::string line;
     std::vector<std::string> words;
     std::vector<std::vector<std::string>> parsedLines;
+
+    if (!file.good())
+    {
+        std::cout << TERMINAL_RED << "Please provide a valid filepath." << std::endl;
+        return false;
+    }
 
     int lineNumber = 0;
     int instructionNumber = 0;

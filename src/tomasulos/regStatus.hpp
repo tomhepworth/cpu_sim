@@ -29,6 +29,7 @@ class RegisterStatusTable
 public:
     std::vector<RegisterStatusEntry *> entries;
     CommonDataBus *cdb;
+    int32_t *physicalRegisters;
 
     RegisterStatusTable()
     {
@@ -103,15 +104,26 @@ public:
     void print()
     {
         std::cout << "PC:" << entries[PC]->value << std::endl;
-        std::cout << "REG\tTAG\t\tVALID\tVAL\tREG\tTAG\t\tVALID\tVAL\tREG\tTAG\t\tVALID\tVAL\tREG\tTAG\t\tVALID\tVAL" << std::endl;
+        std::cout << "REG\tTAG\t\tVALID\tVAL\tPHYS\tREG\tTAG\t\tVALID\tVAL\tPHYS\tREG\tTAG\t\tVALID\tVAL\tPHYS\tREG\tTAG\t\tVALID\tVAL\tPHYS" << std::endl;
         int columnSize = entries.size() / 4;
 
         for (int i = 0; i < columnSize; i++)
         {
-            std::cout << getStringFromRegName(entries[0 * columnSize + i]->r) << "\t" << entries[0 * columnSize + i]->tag << "\t\t" << entries[0 * columnSize + i]->valid << "\t" << entries[0 * columnSize + i]->value;
-            std::cout << " |\t" << getStringFromRegName(entries[1 * columnSize + i]->r) << "\t" << entries[1 * columnSize + i]->tag << "\t\t" << entries[1 * columnSize + i]->valid << "\t" << entries[1 * columnSize + i]->value;
-            std::cout << " |\t" << getStringFromRegName(entries[2 * columnSize + i]->r) << "\t" << entries[2 * columnSize + i]->tag << "\t\t" << entries[2 * columnSize + i]->valid << "\t" << entries[2 * columnSize + i]->value;
-            std::cout << " |\t" << getStringFromRegName(entries[3 * columnSize + i]->r) << "\t" << entries[3 * columnSize + i]->tag << "\t\t" << entries[3 * columnSize + i]->valid << "\t" << entries[3 * columnSize + i]->value << std::endl;
+            std::cout << getStringFromRegName(entries[0 * columnSize + i]->r) << "\t" << entries[0 * columnSize + i]->tag << "\t\t" << entries[0 * columnSize + i]->valid << "\t" << entries[0 * columnSize + i]->value << "\t" << physicalRegisters[entries[0 * columnSize + i]->r];
+            std::cout << " |\t" << getStringFromRegName(entries[1 * columnSize + i]->r) << "\t" << entries[1 * columnSize + i]->tag << "\t\t" << entries[1 * columnSize + i]->valid << "\t" << entries[1 * columnSize + i]->value << "\t" << physicalRegisters[entries[1 * columnSize + i]->r];
+            std::cout << " |\t" << getStringFromRegName(entries[2 * columnSize + i]->r) << "\t" << entries[2 * columnSize + i]->tag << "\t\t" << entries[2 * columnSize + i]->valid << "\t" << entries[2 * columnSize + i]->value << "\t" << physicalRegisters[entries[2 * columnSize + i]->r];
+            std::cout << " |\t" << getStringFromRegName(entries[3 * columnSize + i]->r) << "\t" << entries[3 * columnSize + i]->tag << "\t\t" << entries[3 * columnSize + i]->valid << "\t" << entries[3 * columnSize + i]->value << "\t" << physicalRegisters[entries[3 * columnSize + i]->r] << std::endl;
+        }
+    }
+
+    void flush()
+    {
+        // Remove all tags from TST and reset values to their physical ones
+        for (RegisterStatusEntry *entry : entries)
+        {
+            entry->tag = "";
+            entry->valid = 1;
+            entry->value = physicalRegisters[entry->r];
         }
     }
 };

@@ -4,6 +4,7 @@
 #include <map>
 #include "isa.h"
 #include "parser.h"
+#include <string>
 
 extern bool debug;
 extern bool step;
@@ -33,5 +34,7 @@ const std::string TERMINAL_BOLD_CYAN("\033[1m\033[36m");
 
 std::string getStringFromOpcode(OPCODE opcode);
 std::string getStringFromRegName(REGISTER_ABI_NAME reg);
+
+extern std::string stallReason;
 
 #endif

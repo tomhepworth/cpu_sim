@@ -22,16 +22,18 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
     stalled = false;
 
     // If PC not valid then stall
-    if (!registerStatusTable->getRegValid(PC))
-    {
-        IF_DEBUG(std::cout << "Stalling!" << std::endl);
-        stalled = true;
-        return stalled;
-    }
+    // if (!registerStatusTable->getRegValid(PC))
+    // {
+    //     IF_DEBUG(std::cout << "Stalling!" << std::endl);
+    //     stallReason = "PC INVALID";
+    //     stalled = true;
+    //     return stalled;
+    // }
 
     // If not stalled then take a new instruction from instruction memory
     // Do this on every cycle as PC shouldnt increase if the decoder stalls
-    int32_t pcValue = registerStatusTable->getRegValue(PC);
+    // int32_t pcValue = registerStatusTable->getRegValue(PC);
+    int32_t pcValue = physicalRegisters[PC];
     currentInstruction = program->at(pcValue);
 
     //"Decode"
@@ -46,6 +48,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
     if (opcode == NOP)
     {
         stalled = true;
+        stallReason = "NOP";
         return stalled;
     }
 
@@ -55,6 +58,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         // In the cycle, If ROB is empty, no reservation stations are busy, and we saw a halt...
         // Then we didnt see a halt through speculative execution so it is safe to exit the program
         stalled = true;
+        stallReason = "HLT seen";
         return stalled;
     }
 
@@ -137,11 +141,14 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
             readyToExecute = true;
 
         // Push into ReorderBuffer
-        ReorderBufferEntry *robEntry = new ReorderBufferEntry(opcode, rs->tag, -1, -1, -1, pcValue);
+        ReorderBufferEntry *robEntry = new ReorderBufferEntry(opcode, rs->tag, -1, -1, -1, pcValue, rd);
         int32_t robReference = rob->push(robEntry);
+
         IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
+
         if (robReference == -1) // ROB was full, stall
         {
+            stallReason = "ROB FULL";
             stalled = true;
             return stalled;
         }
@@ -152,8 +159,9 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         IF_DEBUG(std::cout << "ROB SET IS " << rs->robIndex << std::endl);
 
         // Set destination register tag to reservation station tag, and mark invalid
-        // but as a special case dont do this for x0 - x0 should never change
-        if (rd != ZERO)
+        // - as a special case dont do this for x0 - x0 should never change
+        // - dont do this for branch instructions when rd is PC, we dont want to stall because the pc is invalid - this will break speculative execution
+        if (rd != ZERO && rd != PC)
         {
             registerStatusTable->setRegTag(rd, rs->tag);
             registerStatusTable->setRegValid(rd, false);
@@ -164,15 +172,24 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
     }
     else // Otherwise stall
     {
+        stallReason = "NO FREE RS";
         stalled = true;
     }
 
     return stalled;
 }
 
+void TomasulosDecoder::flush()
+{
+    currentInstruction = nullptr;
+    rs1 = rs2 = rd = REGABI_UNUSED;
+    imm = instructionPC = 0;
+    stalled = false;
+}
+
 void TomasulosDecoder::print()
 {
-    std::cout << "OPCODE:\t" << getStringFromOpcode(opcode) << std::endl;
+    std::cout << "INST:\t" << currentInstruction->rawText << std::endl;
     std::cout << "RS1:\t" << getStringFromRegName(rs1) << std::endl;
     std::cout << "RS2:\t" << getStringFromRegName(rs2) << std::endl;
     std::cout << "RD:\t" << getStringFromRegName(rd) << std::endl;

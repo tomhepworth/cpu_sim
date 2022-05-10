@@ -23,6 +23,7 @@ public:
   RegisterStatusTable *registerStatusTable;
   ReservationStationTable *reservationStationTable;
   ReorderBuffer *rob;
+  int32_t *physicalRegisters;
 
   Instruction *currentInstruction;
 
@@ -38,8 +39,9 @@ public:
 
   TomasulosDecoder(){};
 
-  TomasulosDecoder(runnable_program *p, RegisterStatusTable *statusTable, ReservationStationTable *stationTable, ReorderBuffer *_rob)
+  TomasulosDecoder(runnable_program *p, RegisterStatusTable *statusTable, ReservationStationTable *stationTable, ReorderBuffer *_rob, int32_t *_physicalRegisters)
   {
+    physicalRegisters = _physicalRegisters;
     stalled = false;
     program = p;
     registerStatusTable = statusTable;
@@ -51,6 +53,8 @@ public:
     The decode stage should rename registers where appropriate, or pass values straight in
     Return true if stalled */
   bool Cycle(int32_t cpuCycle);
+
+  void flush();
 
   void print();
 };

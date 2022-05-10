@@ -6,9 +6,10 @@
 enum PROCESSOR_MODES
 {
     SCALAR,
-    TOMASULOS
+    TOMASULOS,
+    INVALID
 };
 
-int mode = TOMASULOS;
+int mode = INVALID;
 
 #endif
