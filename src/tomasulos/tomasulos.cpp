@@ -61,8 +61,8 @@ void TomasulosCPU::Run(int speed, bool step)
     // Final stats calculations
     mean_ipc = (float)total_executed_instructions / (float)cycles;
 
-    std::cout << TERMINAL_GREEN << "Done!" << TERMINAL_RESET << std::endl;
-    std::cout << TERMINAL_BOLD_CYAN << "===== " << TERMINAL_MAGENTA << "Stats!" << TERMINAL_CYAN << " =====" << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_CYAN << "===== " << TERMINAL_BOLD_GREEN << "Done!" << TERMINAL_CYAN << " =====" << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_MAGENTA << "Stats... " << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_GREEN << "Cycles:\t" << TERMINAL_GREEN << cycles << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_RED << "Stalls:\t" << TERMINAL_RED << stalls << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_BLUE << "IPC:\t" << TERMINAL_BLUE << mean_ipc << TERMINAL_RESET << std::endl;

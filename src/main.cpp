@@ -156,7 +156,5 @@ int main(int argc, char *const argv[])
         std::cout << "UNKNOWN MODE - exiting" << std::endl;
     }
 
-    std::cout << "STEP WAS: " << step << std::endl;
-
     return 0;
 }
