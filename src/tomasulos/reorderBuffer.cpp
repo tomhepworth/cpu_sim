@@ -26,7 +26,7 @@ ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, i
     cdb = _cdb;
     memory = _memory;
     physicalRegisters = _physicalRegisters;
-    max = _size;
+    max = _size - 1;
     full = false;
     tail = 0;
     head = 0;
@@ -40,7 +40,7 @@ int32_t ReorderBuffer::push(ReorderBufferEntry *entry)
     if (count == max) // ROB FULL
     {
         // Handle error
-        std::cout << "ROB FULL! - stall" << std::endl;
+        std::cout << "ROB FULL! - stall! tag:" << entry->destinationTag << std::endl;
         return -1;
     }
 
@@ -167,7 +167,7 @@ void ReorderBuffer::Cycle()
             if (oldest->destinationVal == oldest->PCValue + 1)
             {
                 // BRANCH NOT TAKEN
-                // IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
+                IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
                 // We speculate by always taking branches, so this means we need to flush...
 
                 // This means:
@@ -180,7 +180,7 @@ void ReorderBuffer::Cycle()
             else
             {
                 // BRANCH WAS TAKEN
-                // IF_DEBUG(std::cout << "ROB: BRANCH WAS TAKEN" << std::endl);
+                IF_DEBUG(std::cout << "ROB: BRANCH WAS TAKEN" << std::endl);
             }
         }
 
@@ -203,6 +203,7 @@ void ReorderBuffer::Cycle()
             break;
         }
 
+        IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
         cdb->broadcast(oldest->destinationTag, oldest->destinationVal);
 
         /*
@@ -225,7 +226,7 @@ void ReorderBuffer::Cycle()
 
 void ReorderBuffer::updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
 {
-    // IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << std::endl);
+    IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << "OP: " << getStringFromOpcode(op) << std::endl);
 
     bool success = false;
     for (int i = 0; i < max; i++)

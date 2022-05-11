@@ -79,7 +79,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
                 if (currentRS->empty)
                 {
                     rs = currentRS;
-                    rs->empty = false;
+                    // rs->empty = false;
                     foundFreeReservationStation = true;
 
                     // IF_DEBUG(std::cout << "Found empty RS with tag: " << rs->tag << std::endl);
@@ -144,14 +144,14 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         ReorderBufferEntry *robEntry = new ReorderBufferEntry(opcode, rs->tag, -1, -1, -1, pcValue, rd);
         int32_t robReference = rob->push(robEntry);
 
-        // IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
-
         if (robReference == -1) // ROB was full, stall
         {
             stallReason = "ROB FULL";
             stalled = true;
             return stalled;
         }
+
+        IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
 
         // Set reservation station values
         rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference, cpuCycle);
@@ -169,6 +169,22 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
 
         // For debugging:
         lastUpdatedRS = rs->tag;
+
+        // As long as it didnt stall, speculate (always take branch) by updating the pc
+        switch (opcode)
+        {
+        case BNE:
+        case BEQ:
+        case BLT:
+        case BGE:
+            IF_DEBUG(std::cout << "SETTING PC to" + std::to_string(physicalRegisters[PC] + imm) << std::endl);
+            physicalRegisters[PC] += imm;
+            stallReason = "SPECULATION STALL";
+            stalled = true;
+            break;
+        default:
+            break;
+        }
     }
     else // Otherwise stall
     {

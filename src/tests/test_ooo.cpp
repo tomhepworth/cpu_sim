@@ -30,7 +30,7 @@ TEST_CASE("add.prog", "[ooo]")
     {
         exit(EXIT_FAILURE);
     }
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
 
     cpu->Run(1, false);
 
@@ -49,7 +49,7 @@ TEST_CASE("mul.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
 
     cpu->Run(1, false);
 
@@ -69,7 +69,7 @@ TEST_CASE("collatz.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
 
     cpu->Run(1, false);
 
@@ -95,7 +95,7 @@ TEST_CASE("loadStoreTest.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
 
     cpu->Run(1, false);
 
@@ -120,7 +120,7 @@ TEST_CASE("relativeBranchTest.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
 
     cpu->Run(1, false);
     REQUIRE(cpu->physicalRegisters[T0] == 5);
@@ -139,7 +139,7 @@ TEST_CASE("dataSegmentTest.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
 
     cpu->Run(1, false);
     REQUIRE(cpu->physicalRegisters[T0] == 0xFFFF);

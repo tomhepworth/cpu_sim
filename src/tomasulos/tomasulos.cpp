@@ -7,6 +7,11 @@
 
 TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores)
 {
+    n_adders = numberOfAdders;
+    n_decoders = numberOfDecoders;
+    n_loadStores = numberOfLoadStores;
+
+    decodes = 0;
     stalls = 0;
     mean_ipc = 0;
     total_executed_instructions = 0;
@@ -25,9 +30,20 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
     rob = new ReorderBuffer(16, cdb, memory, physicalRegisters, this);
 
     // Create functional units
-    adder = new AdderUnit(physicalRegisters, memory, cdb, reservationStationTable, "ADDER", rob, ADDER);
-    loadStoreUnit = new LoadStoreUnit(physicalRegisters, memory, cdb, reservationStationTable, "LS", rob, LOAD_STORE);
-    decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob, physicalRegisters);
+    for (int i = 0; i < n_adders; i++)
+    {
+        adders.push_back(new AdderUnit(physicalRegisters, memory, cdb, reservationStationTable, "ADDER" + std::to_string(i), rob, ADDER));
+    }
+
+    for (int i = 0; i < n_loadStores; i++)
+    {
+        loadStoreUnits.push_back(new LoadStoreUnit(physicalRegisters, memory, cdb, reservationStationTable, "LS" + std::to_string(i), rob, LOAD_STORE));
+    }
+
+    for (int i = 0; i < n_decoders; i++)
+    {
+        decoders.push_back(new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob, physicalRegisters));
+    }
 
     // Copy data into memory
     int32_t memoryIndex = 0;
@@ -83,21 +99,41 @@ bool TomasulosCPU::Cycle()
 {
     bool halt = false;
     rob->Cycle();
-    adder->Cycle();
-    loadStoreUnit->Cycle();
-    bool decodeStalled = decoder->Cycle(cycles);
 
-    // Keep track of how many cycles we stall on
-    if (decodeStalled)
-        stalls++;
-
-    // If decode didnt stall then it's safe to increase the PC
-    // Dont increase if we have reached the end of the program
-    int32_t currentPCValue = physicalRegisters[PC];
-    if (!decodeStalled && currentPCValue < program->size() - 1)
+    for (int i = 0; i < n_adders; i++)
     {
-        registerStatusTable->setRegValue(PC, currentPCValue + 1);
-        physicalRegisters[PC] = currentPCValue + 1;
+        adders.at(i)->Cycle();
+    }
+
+    for (int i = 0; i < n_loadStores; i++)
+    {
+        loadStoreUnits.at(i)->Cycle();
+    }
+
+    bool decodeStalled = false;
+    for (int i = 0; i < n_decoders; i++)
+    {
+        if (decodeStalled)
+        {
+            continue;
+        }
+
+        IF_DEBUG(std::cout << "DECODE:" << i << std::endl;);
+
+        decodeStalled = decoders.at(i)->Cycle(decodes); // Keep track of how many cycles we stall on
+        if (decodeStalled && stallReason != "HLT seen")
+            stalls++;
+
+        // If decode didnt stall then it's safe to increase the PC
+        // Dont increase if we have reached the end of the program
+        int32_t currentPCValue = physicalRegisters[PC];
+        if (!decodeStalled && currentPCValue < program->size() - 1)
+        {
+            registerStatusTable->setRegValue(PC, currentPCValue + 1);
+            physicalRegisters[PC] = currentPCValue + 1;
+        }
+
+        decodes++;
     }
 
     if (debug)
@@ -110,11 +146,18 @@ bool TomasulosCPU::Cycle()
         }
 
         std::cout << "------- Decoder: " << std::endl;
-        decoder->print();
-        std::cout << TERMINAL_RESET << "------- Adder: " << TERMINAL_GREEN << std::endl;
-        adder->print();
-        std::cout << TERMINAL_RESET << "------- LoadStore: " << TERMINAL_MAGENTA << std::endl;
-        loadStoreUnit->print();
+        for (auto decoder : decoders)
+        {
+            std::cout << decoder->currentInstruction->rawText << std::endl;
+            if (decoder->stalled)
+                break;
+        }
+
+        // decoder->print();
+        // std::cout << TERMINAL_RESET << "------- Adder: " << TERMINAL_GREEN << std::endl;
+        // adder->print();
+        // std::cout << TERMINAL_RESET << "------- LoadStore: " << TERMINAL_MAGENTA << std::endl;
+        // loadStoreUnit->print();
         std::cout << TERMINAL_RESET << "------- RegStatus: " << TERMINAL_CYAN << std::endl;
         registerStatusTable->print();
         std::cout << TERMINAL_RESET << "------- ResStation: " << TERMINAL_YELLOW << std::endl;
@@ -156,9 +199,21 @@ void TomasulosCPU::flush()
     // Triggered by ROB, which flushes itself
 
     // Flush all FU's
-    adder->flush();
-    loadStoreUnit->flush();
-    decoder->flush();
+    for (auto &&adder : adders)
+    {
+        adder->flush();
+    }
+
+    for (auto &&loadStoreUnit : loadStoreUnits)
+    {
+
+        loadStoreUnit->flush();
+    }
+
+    for (auto &&decoder : decoders)
+    {
+        decoder->flush();
+    }
 
     // Flush all reservation stations
     reservationStationTable->flush();

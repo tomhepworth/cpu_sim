@@ -14,4 +14,7 @@ My CPU simulator for the University of Bristol's advanced computer architecture 
 
 # Notes
 
+-   Collatz benchmark running with 5 stage scalar, first test = 145 cycles
 -   Collatz benchmark running with tomasulos, first test = 79 cycles
+-   Collatz benchmark running with tomasulos superscalar, 2 decoders, 3 adders, 1 memory, first test = 47 cycles
+-

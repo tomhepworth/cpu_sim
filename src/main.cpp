@@ -22,19 +22,22 @@ int main(int argc, char *const argv[])
     // Handle command line arguments
     int cpu_speed;
     int memSize = 128;
+    int numDecoders;
+    int numAdders;
+    int numLoadStores;
 
     int opt;
     std::string filename;
 
     int option_index = 0;
-    static struct option long_options[] = {{"mode", required_argument, NULL, 0}, {"program", required_argument, NULL, 0}};
+    static struct option long_options[] = {{"mode", required_argument, NULL, 0}, {"program", required_argument, NULL, 0}, {"debug", no_argument, NULL, 0}, {"step", no_argument, NULL, 0}};
 
-    while ((opt = getopt_long(argc, argv, "s:m:dt", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "s:m:a:d:l:", long_options, &option_index)) != -1)
     {
+
         switch (opt)
         {
         case 0:
-
             // LONG ARGUMENTS  Switch by index
             switch (option_index)
             {
@@ -46,18 +49,23 @@ int main(int argc, char *const argv[])
                 }
                 else if (strcmp(optarg, "scalar") == 0)
                 {
-                    std::cout << TERMINAL_BLUE << "Mode:\tSCALAR" << TERMINAL_RESET << std::endl;
                     mode = SCALAR;
                 }
-
                 break;
             case 1: // program (filepath)
                 filename = optarg;
                 break;
+            case 2: // debug
+                debug = true;
+                break;
+            case 3: // step
+                step = true;
+                break;
+
             default:
                 break;
             }
-
+            break;
         case 's':
             cpu_speed = atoi(optarg);
             break;
@@ -65,10 +73,14 @@ int main(int argc, char *const argv[])
             memSize = atoi(optarg);
             break;
         case 'd':
-            debug = true;
+            numDecoders = atoi(optarg);
             break;
-        case 't':
-            step = true;
+        case 'a':
+            numAdders = atoi(optarg);
+            break;
+        case 'l':
+            numLoadStores = atoi(optarg);
+            break;
         }
     }
 
@@ -90,10 +102,13 @@ int main(int argc, char *const argv[])
 
     std::cout << TERMINAL_GREEN << "Successfully Read:\t" << filename.c_str() << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BLUE << "Mode:\t" << ((mode == TOMASULOS) ? "ooo" : "scalar") << TERMINAL_RESET << std::endl;
-    // std::cout << TERMINAL_BLUE << "Speed: " << cpu_speed << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_YELLOW << "Memory Size: " << memSize << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_CYAN << "Debug Mode:\t" << ((debug) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_MAGENTA << "Step mode:\t" << ((step) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_YELLOW << "UNITS:\t"
+              << "Decoders: " + std::to_string(numDecoders) << "\t"
+              << "ALUs: " + std::to_string(numAdders) << "\t\t"
+              << "Load/Store units: " + std::to_string(numLoadStores) << "\t" << TERMINAL_RESET << std::endl;
 
     if (mode == SCALAR)
     {
@@ -161,7 +176,7 @@ int main(int argc, char *const argv[])
     }
     else if (mode == TOMASULOS)
     {
-        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize);
+        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize, numDecoders, numAdders, numLoadStores);
 
         cpu->Run(cpu_speed, step);
     }

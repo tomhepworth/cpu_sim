@@ -42,6 +42,7 @@ private:
 
 public:
     // Stats to record
+    int32_t decodes;
     int32_t cycles;                      // How many cycles the processor took to execute the program
     int32_t stalls;                      // How many cycles the processor was stalled during execution
     float mean_ipc;                      // Average (Mean) instructions per cycle
@@ -57,9 +58,10 @@ public:
     ReorderBuffer *rob;
 
     // Functional units
-    TomasulosDecoder *decoder;
-    AdderUnit *adder;
-    LoadStoreUnit *loadStoreUnit;
+    int n_adders, n_loadStores, n_decoders;
+    std::vector<TomasulosDecoder *> decoders;
+    std::vector<AdderUnit *> adders;
+    std::vector<LoadStoreUnit *> loadStoreUnits;
 
     // Instantiate and set up a tomasulos CPU
     TomasulosCPU() {}

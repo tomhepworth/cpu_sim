@@ -62,7 +62,7 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 == val2)
         {
             result = PCValue + imm;
-            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -74,7 +74,7 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 != val2)
         {
             result = PCValue + imm;
-            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -85,19 +85,18 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 < val2)
         {
             result = PCValue + imm;
-            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
             result = PCValue + 1;
-            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         break;
     case BGE:
         if (val1 >= val2)
         {
             result = PCValue + imm;
-            physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
+            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -122,6 +121,7 @@ TomasuloFunctionalUnit::TomasuloFunctionalUnit(int32_t *_physicalRegisters, int3
     memory = _memory;
 
     type = _type;
+    IF_DEBUG(std::cout << "CREATED FU WITH TAG : " << tag << std::endl)
     reservationStations = new DistributedReservationStation(rst, RESERVATION_STATION_BUFFER_SIZE, tag, type, cdb);
 
     opcode = NOP;
@@ -139,7 +139,6 @@ void LoadStoreUnit::Cycle()
     {
         /*Address calculate phase: take a new memory instruction from the reservation station
         and calculate the address it needs to access*/
-        assert(reservationStations->masterTag == "LS");
 
         toExecute = reservationStations->getOldestReady(); // Getting from a LOAD/STORE type distributed reservation station
 
