@@ -167,7 +167,7 @@ void ReorderBuffer::Cycle()
             if (oldest->destinationVal == oldest->PCValue + 1)
             {
                 // BRANCH NOT TAKEN
-                IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
+                // IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
                 // We speculate by always taking branches, so this means we need to flush...
 
                 // This means:
@@ -180,7 +180,7 @@ void ReorderBuffer::Cycle()
             else
             {
                 // BRANCH WAS TAKEN
-                IF_DEBUG(std::cout << "ROB: BRANCH WAS TAKEN" << std::endl);
+                // IF_DEBUG(std::cout << "ROB: BRANCH WAS TAKEN" << std::endl);
             }
         }
 

@@ -74,10 +74,17 @@ int main(int argc, char *const argv[])
 
     // Parse
     runnable_program *program = new runnable_program;
+    std::vector<int32_t> *data = new std::vector<int32_t>();
 
-    bool parsingSuccess = parse(filename, program);
+    bool parsingSuccess = parse(filename, program, data);
     if (!parsingSuccess)
     {
+        exit(EXIT_FAILURE);
+    }
+
+    if (data->size() > memSize)
+    {
+        std::cout << TERMINAL_RED << "NOT ENOUGH MEMORY FOR DATA SEGMENT" << TERMINAL_RESET << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -97,6 +104,13 @@ int main(int argc, char *const argv[])
         pipeline->setCPU(cpu);
 
         cpu->LoadProgram(program);
+
+        int32_t memoryIndex = 0;
+        for (auto &word : *data)
+        {
+            cpu->memory[memoryIndex] = word;
+            memoryIndex++;
+        }
 
         if (debug)
         {
@@ -147,7 +161,7 @@ int main(int argc, char *const argv[])
     }
     else if (mode == TOMASULOS)
     {
-        TomasulosCPU *cpu = new TomasulosCPU(program, memSize);
+        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize);
 
         cpu->Run(cpu_speed, step);
     }

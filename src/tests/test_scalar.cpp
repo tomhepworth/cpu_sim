@@ -21,9 +21,10 @@ CPU *setupCPU(std::string filename, int memSize)
     pipeline->setCPU(cpu);
 
     runnable_program *program = new runnable_program;
+    std::vector<int32_t> *data = new std::vector<int32_t>();
     std::cout << (TEST_PROGRAM_PATH + filename) << std::endl;
 
-    bool parsingSuccess = parse(TEST_PROGRAM_PATH + filename, program);
+    bool parsingSuccess = parse(TEST_PROGRAM_PATH + filename, program, data);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);

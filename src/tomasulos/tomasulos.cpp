@@ -5,7 +5,7 @@
 // {
 // }
 
-TomasulosCPU::TomasulosCPU(runnable_program *prog, int32_t _memorySize)
+TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize)
 {
     stalls = 0;
     mean_ipc = 0;
@@ -28,6 +28,16 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, int32_t _memorySize)
     adder = new AdderUnit(physicalRegisters, memory, cdb, reservationStationTable, "ADDER", rob, ADDER);
     loadStoreUnit = new LoadStoreUnit(physicalRegisters, memory, cdb, reservationStationTable, "LS", rob, LOAD_STORE);
     decoder = new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob, physicalRegisters);
+
+    // Copy data into memory
+    int32_t memoryIndex = 0;
+    for (auto &word : *data)
+    {
+        memory[memoryIndex] = word;
+        memoryIndex++;
+    }
+
+    std::cout << "Mem 0 is" << memory[0] << std::endl;
 }
 
 void TomasulosCPU::Run(int speed, bool step)
@@ -55,7 +65,6 @@ void TomasulosCPU::Run(int speed, bool step)
             break;
     }
 
-    // TODO Print pretty stats here
     IF_DEBUG(std::cout << TERMINAL_RED << "Program Halting!" << TERMINAL_RESET << std::endl);
 
     // Final stats calculations
@@ -114,9 +123,7 @@ bool TomasulosCPU::Cycle()
         rob->print();
         std::cout << TERMINAL_RESET << "------- MEMORY: " << TERMINAL_RED << std::endl;
         memDump();
-
-        std::cout
-            << TERMINAL_RESET << " =========== END TOMASULOS CYCLE " << cycles << " PC: " << registerStatusTable->getRegValue(PC) << "  ========== " << std::endl;
+        std::cout << TERMINAL_RESET << std::endl;
     }
 
     cycles++;
@@ -138,7 +145,7 @@ void TomasulosCPU::memDump()
     {
         for (int j = 0; j < cols; j++)
         {
-            std::cout << " |\t0x" << i + j * columnsize << "\t" << memory[i + j * columnsize];
+            std::cout << "| x" << i + j * columnsize << "\t" << memory[i + j * columnsize] << "\t";
         }
         std::cout << std::endl;
     }

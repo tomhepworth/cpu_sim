@@ -4,6 +4,8 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <string.h>
+#include <sstream>
 
 #include "parser.h"
 #include "instruction.h"
@@ -108,7 +110,7 @@ bool parseImmediateValue(int32_t *imm, std::string imm_str, int instructionNumbe
     return ret;
 }
 
-bool parse(std::string filename, runnable_program *prog)
+bool parse(std::string filename, runnable_program *prog, std::vector<int32_t> *data)
 {
     std::ifstream file(filename);
     std::string line;
@@ -123,185 +125,205 @@ bool parse(std::string filename, runnable_program *prog)
 
     int lineNumber = 0;
     int instructionNumber = 0;
+    bool IN_DATA_SECTION; // Once data section reached we cant leave it
     while (std::getline(file, line))
     {
-        lineNumber++;
-        try
+        if (strcmp(line.c_str(), "<data>") == 0)
         {
-            // If line is comment (beginning "//" ), skip
-            if (line[0] == '/' && line[1] == '/')
-                continue;
-
-            // If line is just a new line, skip
-            if (line[0] == '\n' || line[0] == '\0')
-                continue;
-
-            // Split string on delimiters " " "," "\t"
-            std::size_t prev = 0, pos;
-            while ((pos = line.find_first_of(" ,\t", prev)) != std::string::npos)
-            {
-                if (pos > prev)
-                    words.push_back(line.substr(prev, pos - prev));
-                prev = pos + 1;
-            }
-            if (prev < line.length())
-                words.push_back(line.substr(prev, std::string::npos));
-
-            // Parse:
-            if (words[0].at(words[0].size() - 1) == ':') // If line is a label, parse it here
-            {
-                std::string labelName = words[0].substr(0, words[0].size() - 1); // Trim off colon eg "label:" -> "label"
-                labelTable.insert(std::make_pair(labelName, instructionNumber)); // Add the address to the map
-                // std::cout << "label " << labelName << "   in#" << instructionNumber << std::endl;
-            }
-            else // If line is an insruction parse it here
-            {
-
-                // Convert to instruction
-                std::pair<OPCODE, INSTRUCTION_FORMAT> decodedInstruciton = instructionMap.at(words[0]);
-                OPCODE opcode = decodedInstruciton.first;
-                INSTRUCTION_FORMAT format = decodedInstruciton.second;
-
-                Instruction *i;
-
-                switch (format)
-                {
-                case R:
-                {
-                    REGISTER_ABI_NAME rd = registerMap.at(words[1]);
-                    REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
-                    REGISTER_ABI_NAME rs2 = registerMap.at(words[3]);
-
-                    i = new Instruction_R(opcode, rd, rs1, rs2);
-                    break;
-                }
-                case I:
-                {
-                    REGISTER_ABI_NAME rd;
-                    REGISTER_ABI_NAME rs1;
-                    int32_t imm;
-                    bool setImm = false;
-                    if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
-                    {
-                        std::string offsetString = "";
-                        std::string rs1String = "";
-                        std::string s = words[2];
-                        int index = 0;
-                        while (s[index] != '(') // Go until we see a bracket
-                        {
-                            offsetString += s[index];
-                            index++;
-                        }
-                        index++;                // skip the bracket
-                        while (s[index] != ')') // Go until we see a close bracket
-                        {
-                            rs1String += s[index];
-                            index++;
-                        }
-                        rd = registerMap.at(words[1]);
-                        rs1 = registerMap.at(rs1String);
-                        setImm = parseImmediateValue(&imm, offsetString.c_str(), instructionNumber);
-                    }
-                    else
-                    {
-                        rd = registerMap.at(words[1]);
-                        rs1 = registerMap.at(words[2]);
-                        setImm = parseImmediateValue(&imm, words[3].c_str(), instructionNumber);
-                    }
-
-                    i = new Instruction_I(opcode, rd, rs1, imm);
-                    if (!setImm)
-                        i->labelToReplace = words[3].c_str();
-                    break;
-                }
-                case S:
-                {
-                    REGISTER_ABI_NAME rs1;
-                    REGISTER_ABI_NAME rs2;
-                    int32_t imm;
-                    bool setImm = false;
-                    // Add parsing support storing instructions Eg: SW rs1, offset(rs2) stores rs1 into memory at rs2 + offset
-                    if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
-                    {
-                        std::string offsetString = "";
-                        std::string rs2String = "";
-                        std::string s = words[2];
-                        int index = 0;
-                        while (s[index] != '(') // Go until we see a bracket
-                        {
-                            offsetString += s[index];
-                            index++;
-                        }
-                        index++;                // skip the bracket
-                        while (s[index] != ')') // Go until we see a close bracket
-                        {
-                            rs2String += s[index];
-                            index++;
-                        }
-
-                        rs1 = registerMap.at(words[1]);
-                        rs2 = registerMap.at(rs2String);
-                        setImm = parseImmediateValue(&imm, offsetString.c_str(), instructionNumber);
-                    }
-                    else
-                    {
-                        rs1 = registerMap.at(words[1]);
-                        rs2 = registerMap.at(words[2]);
-                        setImm = parseImmediateValue(&imm, words[3].c_str(), instructionNumber);
-                    }
-
-                    i = new Instruction_S(opcode, rs1, rs2, imm);
-                    if (!setImm)
-                        i->labelToReplace = words[3].c_str();
-                    break;
-                }
-                case B:
-                {
-                    REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
-                    REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
-                    int32_t imm;
-
-                    bool setImm = parseImmediateValue(&imm, words[3], instructionNumber);
-
-                    // std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
-
-                    i = new Instruction_B(opcode, rs1, rs2, imm);
-                    if (!setImm)
-                        i->labelToReplace = words[3].c_str();
-                    break;
-                }
-                case SPECIAL:
-                {
-                    // Handle special instructions individually
-                    switch (opcode)
-                    {
-                    case HLT:
-                        i = new Instruction_Halt();
-                        break;
-                    case NOP: // NOP is same as default
-                    default:
-                        i = new Instruction();
-                        break;
-                    }
-                    break;
-                }
-                default:
-                    break;
-                }
-
-                i->rawText = line;
-                i->linenum = lineNumber;
-                prog->push_back(i);
-                instructionNumber++;
-            }
-
-            // cleanup
-            words.clear();
+            IN_DATA_SECTION = true;
+            continue; // continue to skip "<data>" line
         }
-        catch (const std::exception &e)
+
+        if (!IN_DATA_SECTION)
         {
-            std::cerr << "Parser error on line " << lineNumber << " caused by: " << e.what() << std::endl;
-            return false;
+            lineNumber++;
+            try
+            {
+                // If line is comment (beginning "//" ), skip
+                if (line[0] == '/' && line[1] == '/')
+                    continue;
+
+                // If line is just a new line, skip
+                if (line[0] == '\n' || line[0] == '\0')
+                    continue;
+
+                // Split string on delimiters " " "," "\t"
+                std::size_t prev = 0, pos;
+                while ((pos = line.find_first_of(" ,\t", prev)) != std::string::npos)
+                {
+                    if (pos > prev)
+                        words.push_back(line.substr(prev, pos - prev));
+                    prev = pos + 1;
+                }
+                if (prev < line.length())
+                    words.push_back(line.substr(prev, std::string::npos));
+
+                // Parse:
+                if (words[0].at(words[0].size() - 1) == ':') // If line is a label, parse it here
+                {
+                    std::string labelName = words[0].substr(0, words[0].size() - 1); // Trim off colon eg "label:" -> "label"
+                    labelTable.insert(std::make_pair(labelName, instructionNumber)); // Add the address to the map
+                    // std::cout << "label " << labelName << "   in#" << instructionNumber << std::endl;
+                }
+                else // If line is an insruction parse it here
+                {
+
+                    // Convert to instruction
+                    std::pair<OPCODE, INSTRUCTION_FORMAT> decodedInstruciton = instructionMap.at(words[0]);
+                    OPCODE opcode = decodedInstruciton.first;
+                    INSTRUCTION_FORMAT format = decodedInstruciton.second;
+
+                    Instruction *i;
+
+                    switch (format)
+                    {
+                    case R:
+                    {
+                        REGISTER_ABI_NAME rd = registerMap.at(words[1]);
+                        REGISTER_ABI_NAME rs1 = registerMap.at(words[2]);
+                        REGISTER_ABI_NAME rs2 = registerMap.at(words[3]);
+
+                        i = new Instruction_R(opcode, rd, rs1, rs2);
+                        break;
+                    }
+                    case I:
+                    {
+                        REGISTER_ABI_NAME rd;
+                        REGISTER_ABI_NAME rs1;
+                        int32_t imm;
+                        bool setImm = false;
+                        if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
+                        {
+                            std::string offsetString = "";
+                            std::string rs1String = "";
+                            std::string s = words[2];
+                            int index = 0;
+                            while (s[index] != '(') // Go until we see a bracket
+                            {
+                                offsetString += s[index];
+                                index++;
+                            }
+                            index++;                // skip the bracket
+                            while (s[index] != ')') // Go until we see a close bracket
+                            {
+                                rs1String += s[index];
+                                index++;
+                            }
+                            rd = registerMap.at(words[1]);
+                            rs1 = registerMap.at(rs1String);
+                            setImm = parseImmediateValue(&imm, offsetString.c_str(), instructionNumber);
+                        }
+                        else
+                        {
+                            rd = registerMap.at(words[1]);
+                            rs1 = registerMap.at(words[2]);
+                            setImm = parseImmediateValue(&imm, words[3].c_str(), instructionNumber);
+                        }
+
+                        i = new Instruction_I(opcode, rd, rs1, imm);
+                        if (!setImm)
+                            i->labelToReplace = words[3].c_str();
+                        break;
+                    }
+                    case S:
+                    {
+                        REGISTER_ABI_NAME rs1;
+                        REGISTER_ABI_NAME rs2;
+                        int32_t imm;
+                        bool setImm = false;
+                        // Add parsing support storing instructions Eg: SW rs1, offset(rs2) stores rs1 into memory at rs2 + offset
+                        if (words.size() == 3) // using "sw rs1, offset(rs2)" syntax
+                        {
+                            std::string offsetString = "";
+                            std::string rs2String = "";
+                            std::string s = words[2];
+                            int index = 0;
+                            while (s[index] != '(') // Go until we see a bracket
+                            {
+                                offsetString += s[index];
+                                index++;
+                            }
+                            index++;                // skip the bracket
+                            while (s[index] != ')') // Go until we see a close bracket
+                            {
+                                rs2String += s[index];
+                                index++;
+                            }
+
+                            rs1 = registerMap.at(words[1]);
+                            rs2 = registerMap.at(rs2String);
+                            setImm = parseImmediateValue(&imm, offsetString.c_str(), instructionNumber);
+                        }
+                        else
+                        {
+                            rs1 = registerMap.at(words[1]);
+                            rs2 = registerMap.at(words[2]);
+                            setImm = parseImmediateValue(&imm, words[3].c_str(), instructionNumber);
+                        }
+
+                        i = new Instruction_S(opcode, rs1, rs2, imm);
+                        if (!setImm)
+                            i->labelToReplace = words[3].c_str();
+                        break;
+                    }
+                    case B:
+                    {
+                        REGISTER_ABI_NAME rs1 = registerMap.at(words[1]);
+                        REGISTER_ABI_NAME rs2 = registerMap.at(words[2]);
+                        int32_t imm;
+
+                        bool setImm = parseImmediateValue(&imm, words[3], instructionNumber);
+
+                        // std::cout << "Branch at: " << lineNumber << " " << instructionNumber << std::endl;
+
+                        i = new Instruction_B(opcode, rs1, rs2, imm);
+                        if (!setImm)
+                            i->labelToReplace = words[3].c_str();
+                        break;
+                    }
+                    case SPECIAL:
+                    {
+                        // Handle special instructions individually
+                        switch (opcode)
+                        {
+                        case HLT:
+                            i = new Instruction_Halt();
+                            break;
+                        case NOP: // NOP is same as default
+                        default:
+                            i = new Instruction();
+                            break;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                    }
+
+                    i->rawText = line;
+                    i->linenum = lineNumber;
+                    prog->push_back(i);
+                    instructionNumber++;
+                }
+
+                // cleanup
+                words.clear();
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Parser error on line " << lineNumber << " caused by: " << e.what() << std::endl;
+                return false;
+            }
+        }
+        else
+        {
+            // Data section parsing
+            std::stringstream ss(line);
+            std::string item;
+            while (std::getline(ss, item, ' '))
+            {
+                data->push_back((int32_t)strtol(item.c_str(), NULL, 0));
+            }
         }
     }
 

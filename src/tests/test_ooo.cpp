@@ -22,14 +22,15 @@ TEST_CASE("Test reservation station tags", "[Reservation Stations]")
 TEST_CASE("add.prog", "[ooo]")
 {
     std::string test_program = TEST_PROGRAM_PATH + "add.prog";
+    std::vector<int32_t> *data = new std::vector<int32_t>();
     runnable_program *program = new runnable_program;
 
-    bool parsingSuccess = parse(test_program, program);
+    bool parsingSuccess = parse(test_program, program, data);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);
     }
-    TomasulosCPU *cpu = new TomasulosCPU(program, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
 
     cpu->Run(1, false);
 
@@ -39,15 +40,16 @@ TEST_CASE("add.prog", "[ooo]")
 TEST_CASE("mul.prog", "[ooo]")
 {
     std::string test_program = TEST_PROGRAM_PATH + "mul.prog";
+    std::vector<int32_t> *data = new std::vector<int32_t>();
     runnable_program *program = new runnable_program;
 
-    bool parsingSuccess = parse(test_program, program);
+    bool parsingSuccess = parse(test_program, program, data);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
 
     cpu->Run(1, false);
 
@@ -58,15 +60,16 @@ TEST_CASE("mul.prog", "[ooo]")
 TEST_CASE("collatz.prog", "[ooo]")
 {
     std::string test_program = TEST_PROGRAM_PATH + "collatz_test.prog";
+    std::vector<int32_t> *data = new std::vector<int32_t>();
     runnable_program *program = new runnable_program;
 
-    bool parsingSuccess = parse(test_program, program);
+    bool parsingSuccess = parse(test_program, program, data);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
 
     cpu->Run(1, false);
 
@@ -84,14 +87,15 @@ TEST_CASE("loadStoreTest.prog", "[ooo]")
 {
     std::string test_program = TEST_PROGRAM_PATH + "loadStoreTest.prog";
     runnable_program *program = new runnable_program;
+    std::vector<int32_t> *data = new std::vector<int32_t>();
 
-    bool parsingSuccess = parse(test_program, program);
+    bool parsingSuccess = parse(test_program, program, data);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
 
     cpu->Run(1, false);
 
@@ -107,17 +111,40 @@ TEST_CASE("loadStoreTest.prog", "[ooo]")
 TEST_CASE("relativeBranchTest.prog", "[ooo]")
 {
     std::string test_program = TEST_PROGRAM_PATH + "relativeBranchTest.prog";
+    std::vector<int32_t> *data = new std::vector<int32_t>();
     runnable_program *program = new runnable_program;
 
-    bool parsingSuccess = parse(test_program, program);
+    bool parsingSuccess = parse(test_program, program, data);
     if (!parsingSuccess)
     {
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, 256);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
 
     cpu->Run(1, false);
     REQUIRE(cpu->physicalRegisters[T0] == 5);
     REQUIRE(cpu->physicalRegisters[T1] == 5);
+}
+
+TEST_CASE("dataSegmentTest.prog", "[ooo]")
+{
+    std::string test_program = TEST_PROGRAM_PATH + "dataSegmentTest.prog";
+    std::vector<int32_t> *data = new std::vector<int32_t>();
+    runnable_program *program = new runnable_program;
+
+    bool parsingSuccess = parse(test_program, program, data);
+    if (!parsingSuccess)
+    {
+        exit(EXIT_FAILURE);
+    }
+
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256);
+
+    cpu->Run(1, false);
+    REQUIRE(cpu->physicalRegisters[T0] == 0xFFFF);
+    REQUIRE(cpu->physicalRegisters[T1] == 0x1234);
+    REQUIRE(cpu->physicalRegisters[T2] == 0x11FF);
+    REQUIRE(cpu->physicalRegisters[T3] == 0x23AB);
+    REQUIRE(cpu->physicalRegisters[T4] == 0);
 }
