@@ -63,7 +63,7 @@ public:
 
     // Instantiate and set up a tomasulos CPU
     TomasulosCPU() {}
-    TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize);
+    TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores);
 
     // Start cycling
     void Run(int speed, bool step);

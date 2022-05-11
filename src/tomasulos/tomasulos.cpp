@@ -5,7 +5,7 @@
 // {
 // }
 
-TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize)
+TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores)
 {
     stalls = 0;
     mean_ipc = 0;
