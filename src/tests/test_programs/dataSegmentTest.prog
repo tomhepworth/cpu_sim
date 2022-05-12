@@ -1,11 +1,16 @@
 lw t0, zero, 0
-lw t1, zero, 1
+lw t1, zero, 2
 addi t2, x0, .a
 addi t3, x0, .b
 lw t4, x0, .b
 hlt
 
 .data
+
 .a 0xFFFF
+
+//Comment here
 0x1234 0x11FF 0x23AB
+
+//Another here
 .b 0xFFFF

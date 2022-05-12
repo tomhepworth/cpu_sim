@@ -328,6 +328,14 @@ bool parse(std::string filename, runnable_program *prog, std::vector<int32_t> *d
             std::stringstream ss(line);
             std::string item;
 
+            // If line is comment (beginning "//" ), skip
+            if (line[0] == '/' && line[1] == '/')
+                continue;
+
+            // If line is just a new line, skip
+            if (line[0] == '\n' || line[0] == '\0')
+                continue;
+
             while (std::getline(ss, item, ' '))
             {
                 if (item.at(0) == '.') // if
