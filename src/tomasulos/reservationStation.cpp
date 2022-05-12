@@ -145,6 +145,17 @@ DistributedReservationStation::DistributedReservationStation(ReservationStationT
     rstable->stationGroups.push_back(this);
 }
 
+int32_t DistributedReservationStation::numberOfFreeStations()
+{
+    int32_t ret = 0;
+    for (ReservationStation *rs : stations)
+    {
+        if (rs->empty)
+            ret++;
+    }
+    return ret;
+}
+
 ReservationStation *DistributedReservationStation::getNextReady()
 {
     ReservationStation *ret = nullptr;

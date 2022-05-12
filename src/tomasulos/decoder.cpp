@@ -63,34 +63,46 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
     }
 
     bool foundFreeReservationStation = false;
+    bool setDRS = false;
+    DistributedReservationStation *drsToUse;
     ReservationStation *rs;
 
     // Search reservation station for a free space
-    for (auto group : reservationStationTable->stationGroups)
+    for (DistributedReservationStation *group : reservationStationTable->stationGroups)
     {
         // Get the required type of reservation station
+        int maxFreeSpaces = 0;
         int requiredType = getReservationStationTypeFromOpode(opcode);
 
         if (group->type == requiredType)
         {
-            // Search within group for a free space
-            for (auto currentRS : group->stations)
+
+            // LOAD BALANCING - prioritise using the DRS with the most empty space
+            int32_t nFreeStations = group->numberOfFreeStations();
+            if (nFreeStations > maxFreeSpaces)
             {
-                if (currentRS->empty)
-                {
-                    rs = currentRS;
-                    // rs->empty = false;
-                    foundFreeReservationStation = true;
+                maxFreeSpaces = nFreeStations;
+                drsToUse = group;
+                setDRS = true;
+            }
+        }
+    }
 
-                    // IF_DEBUG(std::cout << "Found empty RS with tag: " << rs->tag << std::endl);
-                }
-                else
-                {
-                    // IF_DEBUG(std::cout << currentRS->tag << " not empty" << std::endl);
-                }
+    if (setDRS)
+    {
+        // Search within group for a free space
+        for (auto currentRS : drsToUse->stations)
+        {
+            if (currentRS->empty)
+            {
+                rs = currentRS;
+                foundFreeReservationStation = true;
 
-                if (foundFreeReservationStation)
-                    break;
+                // IF_DEBUG(std::cout << "Found empty RS with tag: " << rs->tag << std::endl);
+            }
+            else
+            {
+                // IF_DEBUG(std::cout << currentRS->tag << " not empty" << std::endl);
             }
 
             if (foundFreeReservationStation)

@@ -70,6 +70,7 @@ public:
     DistributedReservationStation(ReservationStationTable *_table, int _size, std::string _masterTag, RESERVATION_STATION_TYPE _type, CommonDataBus *_cdb);
 
     std::vector<ReservationStation *> stations;
+    int32_t numberOfFreeStations();
 
     // Get a valid RS to give to execute in a functional unit
     ReservationStation *getNextReady();

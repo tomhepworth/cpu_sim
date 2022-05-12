@@ -244,29 +244,29 @@ TEST_CASE("dataSegmentTest.prog", "[ooo]")
 
     cpu->Run(1, false);
     REQUIRE(cpu->physicalRegisters[T0] == 0xFFFF);
-    REQUIRE(cpu->physicalRegisters[T1] == 0x1234);
-    REQUIRE(cpu->physicalRegisters[T2] == 0x11FF);
-    REQUIRE(cpu->physicalRegisters[T3] == 0x23AB);
-    REQUIRE(cpu->physicalRegisters[T4] == 0);
+    REQUIRE(cpu->physicalRegisters[T1] == 0x11FF);
+    REQUIRE(cpu->physicalRegisters[T2] == 0);
+    REQUIRE(cpu->physicalRegisters[T3] == 4);
+    REQUIRE(cpu->physicalRegisters[T4] == 0xFFFA);
 
     cpu1->Run(1, false);
     REQUIRE(cpu1->physicalRegisters[T0] == 0xFFFF);
-    REQUIRE(cpu1->physicalRegisters[T1] == 0x1234);
-    REQUIRE(cpu1->physicalRegisters[T2] == 0x11FF);
-    REQUIRE(cpu1->physicalRegisters[T3] == 0x23AB);
-    REQUIRE(cpu1->physicalRegisters[T4] == 0);
+    REQUIRE(cpu1->physicalRegisters[T1] == 0x11FF);
+    REQUIRE(cpu1->physicalRegisters[T2] == 0);
+    REQUIRE(cpu1->physicalRegisters[T3] == 4);
+    REQUIRE(cpu1->physicalRegisters[T4] == 0xFFFA);
 
     cpu2->Run(1, false);
     REQUIRE(cpu2->physicalRegisters[T0] == 0xFFFF);
-    REQUIRE(cpu2->physicalRegisters[T1] == 0x1234);
-    REQUIRE(cpu2->physicalRegisters[T2] == 0x11FF);
-    REQUIRE(cpu2->physicalRegisters[T3] == 0x23AB);
-    REQUIRE(cpu2->physicalRegisters[T4] == 0);
+    REQUIRE(cpu2->physicalRegisters[T1] == 0x11FF);
+    REQUIRE(cpu2->physicalRegisters[T2] == 0);
+    REQUIRE(cpu2->physicalRegisters[T3] == 4);
+    REQUIRE(cpu2->physicalRegisters[T4] == 0xFFFA);
 
     cpu3->Run(1, false);
     REQUIRE(cpu3->physicalRegisters[T0] == 0xFFFF);
-    REQUIRE(cpu3->physicalRegisters[T1] == 0x1234);
-    REQUIRE(cpu3->physicalRegisters[T2] == 0x11FF);
-    REQUIRE(cpu3->physicalRegisters[T3] == 0x23AB);
-    REQUIRE(cpu3->physicalRegisters[T4] == 0);
+    REQUIRE(cpu3->physicalRegisters[T1] == 0x11FF);
+    REQUIRE(cpu3->physicalRegisters[T2] == 0);
+    REQUIRE(cpu3->physicalRegisters[T3] == 4);
+    REQUIRE(cpu3->physicalRegisters[T4] == 0xFFFA);
 }

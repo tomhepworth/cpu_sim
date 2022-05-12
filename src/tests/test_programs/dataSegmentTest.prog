@@ -1,7 +1,13 @@
 lw t0, zero, 0
 lw t1, zero, 2
+
+// Note that variables are ONLY POINTERS, this will load 0 into t2
 addi t2, x0, .a
+
+// Same again, .b is a pointer and has value 4.
 addi t3, x0, .b
+
+// But this will load 0xFFFA into t4
 lw t4, x0, .b
 hlt
 
@@ -9,8 +15,8 @@ hlt
 
 .a 0xFFFF
 
-//Comment here
+// Testing Comment here
 0x1234 0x11FF 0x23AB
 
-//Another here
-.b 0xFFFF
+// Another comment here
+.b 0xFFFA
