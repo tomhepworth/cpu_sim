@@ -75,6 +75,7 @@ std::map<std::string, REGISTER_ABI_NAME> registerMap = {
 };
 
 std::map<std::string, int> labelTable;
+std::map<std::string, int> variableTable;
 
 bool stringIsNumber(std::string line)
 {
@@ -89,6 +90,12 @@ bool parseImmediateValue(int32_t *imm, std::string imm_str, int instructionNumbe
     if (stringIsNumber(imm_str.c_str()))
     {
         *imm = std::atoi(imm_str.c_str());
+    }
+    else if (imm_str.at(0) == '.') // Variable
+    {
+        // Wont have seen any variables yet, so save instruction number in int slot
+        variableTable.insert(std::make_pair(imm_str, instructionNumber));
+        *imm = instructionNumber;
     }
     else
     {
@@ -128,7 +135,7 @@ bool parse(std::string filename, runnable_program *prog, std::vector<int32_t> *d
     bool IN_DATA_SECTION; // Once data section reached we cant leave it
     while (std::getline(file, line))
     {
-        if (strcmp(line.c_str(), "<data>") == 0)
+        if (strcmp(line.c_str(), ".data") == 0)
         {
             IN_DATA_SECTION = true;
             continue; // continue to skip "<data>" line
@@ -320,22 +327,32 @@ bool parse(std::string filename, runnable_program *prog, std::vector<int32_t> *d
             // Data section parsing
             std::stringstream ss(line);
             std::string item;
+
             while (std::getline(ss, item, ' '))
             {
-                data->push_back((int32_t)strtol(item.c_str(), NULL, 0));
+                if (item.at(0) == '.') // if
+                {
+                    int memoryLocation = data->size();
+                    variableTable.find(item)->second = memoryLocation;
+                }
+                else
+                {
+                    data->push_back((int32_t)strtol(item.c_str(), NULL, 0));
+                }
             }
         }
     }
 
     /*  Now iterate over any instructions that used labels that weren't found
-        at the time they were parsed, and update them */
+        at the time they were parsed, and update them
+     */
     for (auto &&i : *prog)
     {
         // std::cout << "casting: " << i->labelToReplace << std::endl;
         auto x = dynamic_cast<Instruction_B *>(i); // Will return nullptr if i isn't an Instruction_B
         if (x != nullptr)
         {
-            if (x->labelToReplace != "")
+            if (x->labelToReplace != "" && x->labelToReplace.at(0) != '.')
             {
                 // std::cout << "CASTED: " << x->labelToReplace << std::endl;
                 int32_t instructionNumber = x->getImm();
@@ -349,11 +366,24 @@ bool parse(std::string filename, runnable_program *prog, std::vector<int32_t> *d
                 }
                 else // Not found the label, keep a reference of it so that we can do the relative addressing once we have found it
                 {
-                    // std::cout << "REFERENCE TO UNKNOWN LABEL LABEL: " << x->labelToReplace << std::endl;
+                    std::cout << "REFERENCE TO UNKNOWN LABEL LABEL: " << x->labelToReplace << std::endl;
                 }
             }
 
             // std::cout << "ptr: " << x << std::endl;
+        }
+    }
+
+    // Do another pass and update variables with memory addresses
+    for (auto &&i : *prog)
+    {
+        if (i->labelToReplace == "")
+            continue;
+
+        if (i->labelToReplace.at(0) == '.')
+        {
+            i->imm = variableTable.find(i->labelToReplace)->second;
+            std::cout << "SET INSTRUCTION " << i->rawText << " IMM TO " << i->imm;
         }
     }
 

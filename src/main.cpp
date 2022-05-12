@@ -22,9 +22,9 @@ int main(int argc, char *const argv[])
     // Handle command line arguments
     int cpu_speed;
     int memSize = 128;
-    int numDecoders;
-    int numAdders;
-    int numLoadStores;
+    int numDecoders = 1;
+    int numAdders = 1;
+    int numLoadStores = 1;
 
     int opt;
     std::string filename;
