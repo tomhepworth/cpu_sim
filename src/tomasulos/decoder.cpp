@@ -1,6 +1,7 @@
 #include "decoder.hpp"
 #include "debug_utils.h"
 #include "reorderBuffer.hpp"
+#include "BranchTargetBuffer.hpp"
 
 RESERVATION_STATION_TYPE getReservationStationTypeFromOpode(OPCODE opcode)
 {
@@ -163,7 +164,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
             return stalled;
         }
 
-        IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
+        // IF_DEBUG(std::cout << "ROB REF IS " << robReference << std::endl);
 
         // Set reservation station values
         rs->set(readyToExecute, opcode, source1Tag, source1Val, source2Tag, source2Val, imm, instructionPC, robReference, cpuCycle);
@@ -182,15 +183,41 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         // For debugging:
         lastUpdatedRS = rs->tag;
 
-        // As long as it didnt stall, speculate (always take branch) by updating the pc
+        int32_t targetPC = btb->targets[pcValue & btb->size];
+        // This code simulates a branch target buffer and handles branch prediction
         switch (opcode)
         {
         case BNE:
         case BEQ:
         case BLT:
         case BGE:
-            IF_DEBUG(std::cout << "SETTING PC to" + std::to_string(physicalRegisters[PC] + imm) << std::endl);
-            physicalRegisters[PC] += imm;
+            IF_DEBUG(std::cout << "DECODED BRANCH - doing btb stuff   " << pcValue << std::endl);
+            // If entry for PC exists in btb
+            if (targetPC != -1)
+            {
+                // Set PC to target for next decode
+                physicalRegisters[PC] = targetPC;
+            }
+            else
+            {
+                // If not in BTB, decide whether to take the branch based on the prediction bits in the BTB
+                if (btb->predictionBits[pcValue & btb->size] <= 1)
+                {
+                    // strongly or weakly DONT take
+                    IF_DEBUG(std::cout << "NOT TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
+                    physicalRegisters[PC] += 1;
+                }
+                else
+                {
+                    // strongly or weakly DO take
+                    IF_DEBUG(std::cout << "TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
+                    physicalRegisters[PC] += imm;
+                }
+
+                // Update btb
+                btb->targets[pcValue & btb->size] = physicalRegisters[PC];
+            }
+
             stallReason = "SPECULATION STALL";
             stalled = true;
             break;

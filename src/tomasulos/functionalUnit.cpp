@@ -121,7 +121,7 @@ TomasuloFunctionalUnit::TomasuloFunctionalUnit(int32_t *_physicalRegisters, int3
     memory = _memory;
 
     type = _type;
-    IF_DEBUG(std::cout << "CREATED FU WITH TAG : " << tag << std::endl)
+    // IF_DEBUG(std::cout << "CREATED FU WITH TAG : " << tag << std::endl)
     reservationStations = new DistributedReservationStation(rst, RESERVATION_STATION_BUFFER_SIZE, tag, type, cdb);
 
     opcode = NOP;

@@ -15,7 +15,7 @@ void CommonDataBus::broadcast(TAG t, int32_t v)
     Note, this way of doing thigs means results are always immediately committed.
     */
 
-    IF_DEBUG(std::cout << "BROADCASTING:: " << t << " " << v << std::endl);
+    // IF_DEBUG(std::cout << "BROADCASTING:: " << t << " " << v << std::endl);
 
     free = false;
     tag = t;

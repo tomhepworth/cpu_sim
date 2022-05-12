@@ -10,6 +10,7 @@
 #include "decoder.hpp"
 #include "functionalUnit.hpp"
 #include "reorderBuffer.hpp"
+#include "BranchTargetBuffer.hpp"
 
 /* Points by Onar Mutlu:
 1: If reservation station available before renaming
@@ -42,6 +43,8 @@ private:
 
 public:
     // Stats to record
+    int32_t correct_predictions;
+    int32_t incorrect_predictions;
     int32_t decodes;
     int32_t cycles;                      // How many cycles the processor took to execute the program
     int32_t stalls;                      // How many cycles the processor was stalled during execution
@@ -55,6 +58,7 @@ public:
     CommonDataBus *cdb;
     ReservationStationTable *reservationStationTable;
     RegisterStatusTable *registerStatusTable;
+    BranchTargetBuffer *btb;
     ReorderBuffer *rob;
 
     // Functional units

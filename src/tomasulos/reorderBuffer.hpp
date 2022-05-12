@@ -3,6 +3,7 @@
 
 #include "reservationStation.hpp"
 #include "cdb.hpp"
+#include "BranchTargetBuffer.hpp"
 
 class TomasulosCPU; // Forward declaration
 
@@ -45,8 +46,9 @@ public:
     CommonDataBus *cdb;
     int32_t *memory;
     int32_t *physicalRegisters;
+    BranchTargetBuffer *btb;
 
-    ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *physicalRegisters, TomasulosCPU *_cpu);
+    ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *physicalRegisters, TomasulosCPU *_cpu, BranchTargetBuffer *_btb);
 
     // Add an entry to the ROB, return its index to be used as a reference to it
     int32_t push(ReorderBufferEntry *entry);

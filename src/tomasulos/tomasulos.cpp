@@ -11,6 +11,8 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
     n_decoders = numberOfDecoders;
     n_loadStores = numberOfLoadStores;
 
+    correct_predictions = 0;
+    incorrect_predictions = 0;
     decodes = 0;
     stalls = 0;
     mean_ipc = 0;
@@ -27,7 +29,9 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
     registerStatusTable->cdb = cdb; // messy but necessary
     registerStatusTable->physicalRegisters = physicalRegisters;
 
-    rob = new ReorderBuffer(16, cdb, memory, physicalRegisters, this);
+    btb = new BranchTargetBuffer(0xFF);
+
+    rob = new ReorderBuffer(16, cdb, memory, physicalRegisters, this, btb);
 
     // Create functional units
     for (int i = 0; i < n_adders; i++)
@@ -42,7 +46,7 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
 
     for (int i = 0; i < n_decoders; i++)
     {
-        decoders.push_back(new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob, physicalRegisters));
+        decoders.push_back(new TomasulosDecoder(program, registerStatusTable, reservationStationTable, rob, physicalRegisters, btb));
     }
 
     // Copy data into memory
@@ -92,6 +96,8 @@ void TomasulosCPU::Run(int speed, bool step)
     std::cout << TERMINAL_BOLD_GREEN << "Cycles:\t" << TERMINAL_GREEN << cycles << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_RED << "Stalls:\t" << TERMINAL_RED << stalls << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_BLUE << "IPC:\t" << TERMINAL_BLUE << mean_ipc << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_GREEN << "Correct Predictions:\t" << TERMINAL_GREEN << correct_predictions << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_RED << "Incorrect Predictions:\t" << TERMINAL_RED << incorrect_predictions << TERMINAL_RESET << std::endl;
 
     return;
 }
@@ -119,7 +125,7 @@ bool TomasulosCPU::Cycle()
             continue;
         }
 
-        IF_DEBUG(std::cout << "DECODE:" << i << std::endl;);
+        // IF_DEBUG(std::cout << "DECODE:" << i << std::endl;);
 
         decodeStalled = decoders.at(i)->Cycle(decodes); // Keep track of how many cycles we stall on
         if (decodeStalled && stallReason != "HLT seen")
@@ -149,7 +155,7 @@ bool TomasulosCPU::Cycle()
         std::cout << "------- Decoder: " << std::endl;
         for (auto decoder : decoders)
         {
-            std::cout << decoder->currentInstruction->rawText << std::endl;
+            std::cout << decoder->instructionPC << "\t" << decoder->currentInstruction->rawText << std::endl;
             if (decoder->stalled)
                 break;
         }
@@ -159,6 +165,8 @@ bool TomasulosCPU::Cycle()
         // adder->print();
         // std::cout << TERMINAL_RESET << "------- LoadStore: " << TERMINAL_MAGENTA << std::endl;
         // loadStoreUnit->print();
+        std::cout << TERMINAL_RESET << "------- BranchTargetBuffer: " << TERMINAL_CYAN << std::endl;
+        btb->print();
         std::cout << TERMINAL_RESET << "------- RegStatus: " << TERMINAL_CYAN << std::endl;
         registerStatusTable->print();
         std::cout << TERMINAL_RESET << "------- ResStation: " << TERMINAL_YELLOW << std::endl;

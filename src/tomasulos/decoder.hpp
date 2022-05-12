@@ -27,6 +27,8 @@ public:
 
   Instruction *currentInstruction;
 
+  BranchTargetBuffer *btb;
+
   OPCODE opcode;
   REGISTER_ABI_NAME rs1;
   REGISTER_ABI_NAME rs2;
@@ -39,7 +41,7 @@ public:
 
   TomasulosDecoder(){};
 
-  TomasulosDecoder(runnable_program *p, RegisterStatusTable *statusTable, ReservationStationTable *stationTable, ReorderBuffer *_rob, int32_t *_physicalRegisters)
+  TomasulosDecoder(runnable_program *p, RegisterStatusTable *statusTable, ReservationStationTable *stationTable, ReorderBuffer *_rob, int32_t *_physicalRegisters, BranchTargetBuffer *_btb)
   {
     physicalRegisters = _physicalRegisters;
     stalled = false;
@@ -47,6 +49,8 @@ public:
     registerStatusTable = statusTable;
     reservationStationTable = stationTable;
     rob = _rob;
+
+    btb = _btb;
   }
 
   /*Take instruction from instruction memory, "decode", pass to available reservation station, stall if unable to pass

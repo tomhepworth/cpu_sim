@@ -20,7 +20,7 @@ void ReorderBufferEntry::print()
     std::cout << getStringFromOpcode(op) << "\t" << destinationTag << "\t\t" << destinationVal << "\t\t" << storeAddr << "\t\t" << storeData << "\t" << PCValue << "\t" << valid << "\t" << getStringFromRegName(physicalRegisterDestination); // Delibarately avoid std::endl to output head tail posiiton ins ROB::print()
 }
 
-ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *_physicalRegisters, TomasulosCPU *_cpu)
+ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, int32_t *_physicalRegisters, TomasulosCPU *_cpu, BranchTargetBuffer *_btb)
 {
     cpu = _cpu;
     cdb = _cdb;
@@ -31,6 +31,7 @@ ReorderBuffer::ReorderBuffer(int _size, CommonDataBus *_cdb, int32_t *_memory, i
     tail = 0;
     head = 0;
     count = 0;
+    btb = _btb;
 
     buffer = new ReorderBufferEntry *[max];
 }
@@ -156,7 +157,7 @@ void ReorderBuffer::Cycle()
         // If we are committing a halt, end everything
         if (oldest->op == HLT)
         {
-            IF_DEBUG(std::cout << "HALT EXCEPTION COMMITTING! " << std::endl);
+            // IF_DEBUG(std::cout << "HALT EXCEPTION COMMITTING! " << std::endl);
             exit(0);
         }
 
@@ -164,10 +165,13 @@ void ReorderBuffer::Cycle()
         bool flushed = false;
         if (oldest->physicalRegisterDestination == PC) // RD is PC only for branch instructions
         {
-            if (oldest->destinationVal == oldest->PCValue + 1)
+            // The target PC is the branch we took.
+            int32_t targetPC = cpu->btb->targets[oldest->PCValue & btb->size];
+
+            if (oldest->destinationVal != targetPC)
             {
-                // BRANCH NOT TAKEN
-                IF_DEBUG(std::cout << "ROB: BRANCH NOT TAKEN" << std::endl);
+                // Predicted incorrectly so flush
+                IF_DEBUG(std::cout << "ROB: PREDICTED INCORRECTLY" << std::endl);
                 // We speculate by always taking branches, so this means we need to flush...
 
                 // This means:
@@ -176,11 +180,31 @@ void ReorderBuffer::Cycle()
                 //      - all the reservation stations should be cleared
                 triggerFlush();
                 flushed = true;
+
+                // Also update btb
+                btb->targets[oldest->PCValue & btb->size] = oldest->destinationVal;
+
+                // if the branch was not taken then destVal will be pc+1
+                if (oldest->destinationVal != oldest->PCValue + 1)
+                {
+                    // Branch not taken so subtract from prediction bits if > 0
+                    if (btb->predictionBits[oldest->PCValue & cpu->btb->size] < 3)
+                        btb->predictionBits[oldest->PCValue & cpu->btb->size]++;
+                }
+                else
+                {
+                    // Branch taken so add to prediction bits if < 3
+                    if (btb->predictionBits[oldest->PCValue & cpu->btb->size] > 0)
+                        btb->predictionBits[oldest->PCValue & cpu->btb->size]--;
+                }
+
+                cpu->incorrect_predictions++;
             }
             else
             {
-                // BRANCH WAS TAKEN
-                IF_DEBUG(std::cout << "ROB: BRANCH WAS TAKEN" << std::endl);
+                // Predicted correctly so just carry on
+                IF_DEBUG(std::cout << "ROB: PREDICTED CORRECTLY" << std::endl);
+                cpu->correct_predictions++;
             }
         }
 
@@ -203,7 +227,7 @@ void ReorderBuffer::Cycle()
             break;
         }
 
-        IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
+        // IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
         cdb->broadcast(oldest->destinationTag, oldest->destinationVal);
 
         /*
@@ -226,7 +250,7 @@ void ReorderBuffer::Cycle()
 
 void ReorderBuffer::updateField(OPCODE op, TAG destinationTag, int32_t newVal, int32_t newStoreAddr, int32_t newStoreData, bool valid, bool isStore)
 {
-    IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << "OP: " << getStringFromOpcode(op) << std::endl);
+    // IF_DEBUG(std::cout << "ROB UPDATING TAG : " << destinationTag << "OP: " << getStringFromOpcode(op) << std::endl);
 
     bool success = false;
     for (int i = 0; i < max; i++)
