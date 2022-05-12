@@ -165,46 +165,71 @@ void ReorderBuffer::Cycle()
         bool flushed = false;
         if (oldest->physicalRegisterDestination == PC) // RD is PC only for branch instructions
         {
-            // The target PC is the branch we took.
-            int32_t targetPC = cpu->btb->targets[oldest->PCValue & btb->size];
-
-            if (oldest->destinationVal != targetPC)
+            if (btb->mode == 0) // two bit
             {
-                // Predicted incorrectly so flush
-                IF_DEBUG(std::cout << "ROB: PREDICTED INCORRECTLY" << std::endl);
-                // We speculate by always taking branches, so this means we need to flush...
-
-                // This means:
-                //      - everything in the ROB newer than this instruction is invalidated and can be deleted
-                //      - all the functional units should be cleared
-                //      - all the reservation stations should be cleared
-                triggerFlush();
-                flushed = true;
-
-                // Also update btb
-                btb->targets[oldest->PCValue & btb->size] = oldest->destinationVal;
-
-                // if the branch was not taken then destVal will be pc+1
-                if (oldest->destinationVal != oldest->PCValue + 1)
+                // The target PC is the branch we took.
+                int32_t targetPC = cpu->btb->targets[oldest->PCValue & btb->size];
+                if (oldest->destinationVal != targetPC)
                 {
-                    // Branch not taken so subtract from prediction bits if > 0
-                    if (btb->predictionBits[oldest->PCValue & cpu->btb->size] < 3)
-                        btb->predictionBits[oldest->PCValue & cpu->btb->size]++;
+                    // Predicted incorrectly so flush
+                    // IF_DEBUG(std::cout << "ROB: PREDICTED INCORRECTLY" << std::endl);
+
+                    triggerFlush();
+                    flushed = true;
+
+                    // Also update btb
+                    btb->targets[oldest->PCValue & btb->size] = oldest->destinationVal;
+
+                    // if the branch was not taken then destVal will be pc+1
+                    if (oldest->destinationVal != oldest->PCValue + 1)
+                    {
+                        // Branch not taken so subtract from prediction bits if > 0
+                        if (btb->predictionBits[oldest->PCValue & cpu->btb->size] < 3)
+                            btb->predictionBits[oldest->PCValue & cpu->btb->size]++;
+                    }
+                    else
+                    {
+                        // Branch taken so add to prediction bits if < 3
+                        if (btb->predictionBits[oldest->PCValue & cpu->btb->size] > 0)
+                            btb->predictionBits[oldest->PCValue & cpu->btb->size]--;
+                    }
+
+                    cpu->incorrect_predictions++;
                 }
                 else
                 {
-                    // Branch taken so add to prediction bits if < 3
-                    if (btb->predictionBits[oldest->PCValue & cpu->btb->size] > 0)
-                        btb->predictionBits[oldest->PCValue & cpu->btb->size]--;
+                    // Predicted correctly so just carry on
+                    IF_DEBUG(std::cout << "ROB: PREDICTED CORRECTLY" << std::endl);
+                    cpu->correct_predictions++;
                 }
-
-                cpu->incorrect_predictions++;
             }
-            else
+            else if (btb->mode == 1) // always take
             {
-                // Predicted correctly so just carry on
-                IF_DEBUG(std::cout << "ROB: PREDICTED CORRECTLY" << std::endl);
-                cpu->correct_predictions++;
+                if (oldest->destinationVal == oldest->PCValue + 1)
+                {
+                    IF_DEBUG(std::cout << "FLUSHING" << std::endl);
+                    triggerFlush();
+                    flushed = true;
+                    cpu->incorrect_predictions++;
+                }
+                else
+                {
+                    cpu->correct_predictions++;
+                }
+            }
+            else if (btb->mode == 2) // never take
+            {
+                if (oldest->destinationVal != oldest->PCValue + 1)
+                {
+                    // IF_DEBUG(std::cout << "FLUSHING" << std::endl);
+                    triggerFlush();
+                    flushed = true;
+                    cpu->incorrect_predictions++;
+                }
+                else
+                {
+                    cpu->correct_predictions++;
+                }
             }
         }
 
@@ -227,7 +252,7 @@ void ReorderBuffer::Cycle()
             break;
         }
 
-        // IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
+        IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
         cdb->broadcast(oldest->destinationTag, oldest->destinationVal);
 
         /*

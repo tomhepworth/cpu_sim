@@ -114,7 +114,6 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
     // If a reservation sation was found, populate it
     if (foundFreeReservationStation)
     {
-
         // Look up sources in reg status table, populate values if sources are valid
         bool source1Valid = registerStatusTable->getRegValid(rs1);
         bool source2Valid = registerStatusTable->getRegValid(rs2);
@@ -191,31 +190,48 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         case BEQ:
         case BLT:
         case BGE:
-            IF_DEBUG(std::cout << "DECODED BRANCH - doing btb stuff   " << pcValue << std::endl);
+            IF_DEBUG(std::cout << "DECODED BRANCH - doing btb stuff   " << pcValue << " " << btb->mode << std::endl);
             // If entry for PC exists in btb
-            if (targetPC != -1)
+            if (btb->mode == 0) // two bit
             {
-                // Set PC to target for next decode
-                physicalRegisters[PC] = targetPC;
-            }
-            else
-            {
-                // If not in BTB, decide whether to take the branch based on the prediction bits in the BTB
-                if (btb->predictionBits[pcValue & btb->size] <= 1)
+                if (targetPC != -1)
                 {
-                    // strongly or weakly DONT take
-                    IF_DEBUG(std::cout << "NOT TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
-                    physicalRegisters[PC] += 1;
+                    // Set PC to target for next decode
+                    physicalRegisters[PC] = targetPC;
                 }
                 else
                 {
-                    // strongly or weakly DO take
-                    IF_DEBUG(std::cout << "TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
-                    physicalRegisters[PC] += imm;
-                }
+                    // If not in BTB, decide whether to take the branch based on the prediction bits in the BTB
+                    if (btb->predictionBits[pcValue & btb->size] <= 1)
+                    {
+                        // strongly or weakly DONT take
+                        IF_DEBUG(std::cout << "NOT TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
+                        physicalRegisters[PC] += 1;
+                    }
+                    else
+                    {
+                        // strongly or weakly DO take
+                        IF_DEBUG(std::cout << "TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
+                        physicalRegisters[PC] += imm;
+                    }
 
-                // Update btb
-                btb->targets[pcValue & btb->size] = physicalRegisters[PC];
+                    // Update btb
+                    btb->targets[pcValue & btb->size] = physicalRegisters[PC];
+                }
+            }
+            else if (btb->mode == 1) // always take
+            {
+                IF_DEBUG(std::cout << "SETTING PC to" + std::to_string(physicalRegisters[PC] + imm) << std::endl);
+
+                physicalRegisters[PC] += imm;
+            }
+            else if (btb->mode == 2) // never take
+            {
+                physicalRegisters[PC] += 1;
+            }
+            else
+            {
+                std::cout << "WTF???" << std::endl;
             }
 
             stallReason = "SPECULATION STALL";

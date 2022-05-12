@@ -10,6 +10,14 @@ enum PROCESSOR_MODES
     INVALID
 };
 
+enum BRANCH_PREDICT_MODE
+{
+    TWO_BIT,
+    ALWAYS_TAKE,
+    NEVER_TAKE
+};
+
 int mode = INVALID;
+int bp_mode = TWO_BIT;
 
 #endif

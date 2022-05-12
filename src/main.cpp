@@ -16,6 +16,7 @@
 extern char *optarg;
 extern int optind, opterr, optopt;
 extern int mode;
+extern int bp_mode;
 
 int main(int argc, char *const argv[])
 {
@@ -30,7 +31,7 @@ int main(int argc, char *const argv[])
     std::string filename;
 
     int option_index = 0;
-    static struct option long_options[] = {{"mode", required_argument, NULL, 0}, {"program", required_argument, NULL, 0}, {"debug", no_argument, NULL, 0}, {"step", no_argument, NULL, 0}};
+    static struct option long_options[] = {{"mode", required_argument, NULL, 0}, {"program", required_argument, NULL, 0}, {"debug", no_argument, NULL, 0}, {"step", no_argument, NULL, 0}, {"bp", required_argument, NULL, 0}};
 
     while ((opt = getopt_long(argc, argv, "s:m:a:d:l:", long_options, &option_index)) != -1)
     {
@@ -60,6 +61,20 @@ int main(int argc, char *const argv[])
                 break;
             case 3: // step
                 step = true;
+                break;
+            case 4: // bp mode
+                if (strcmp(optarg, "2BIT") == 0)
+                {
+                    bp_mode = TWO_BIT;
+                }
+                else if (strcmp(optarg, "AT") == 0)
+                {
+                    bp_mode = ALWAYS_TAKE;
+                }
+                else if (strcmp(optarg, "NT") == 0)
+                {
+                    bp_mode = NEVER_TAKE;
+                }
                 break;
 
             default:
@@ -105,6 +120,7 @@ int main(int argc, char *const argv[])
     std::cout << TERMINAL_YELLOW << "Memory Size: " << memSize << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_CYAN << "Debug Mode:\t" << ((debug) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_MAGENTA << "Step mode:\t" << ((step) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BLUE << "BP mode:\t" << bp_mode << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_YELLOW << "UNITS:\t"
               << "Decoders: " + std::to_string(numDecoders) << "\t"
               << "ALUs: " + std::to_string(numAdders) << "\t\t"
@@ -176,7 +192,7 @@ int main(int argc, char *const argv[])
     }
     else if (mode == TOMASULOS)
     {
-        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize, numDecoders, numAdders, numLoadStores);
+        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize, numDecoders, numAdders, numLoadStores, bp_mode);
 
         cpu->Run(cpu_speed, step);
     }

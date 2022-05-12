@@ -61,6 +61,8 @@ public:
     BranchTargetBuffer *btb;
     ReorderBuffer *rob;
 
+    int bp_mode;
+
     // Functional units
     int n_adders, n_loadStores, n_decoders;
     std::vector<TomasulosDecoder *> decoders;
@@ -69,7 +71,7 @@ public:
 
     // Instantiate and set up a tomasulos CPU
     TomasulosCPU() {}
-    TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores);
+    TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores, int bp_mode);
 
     // Start cycling
     void Run(int speed, bool step);

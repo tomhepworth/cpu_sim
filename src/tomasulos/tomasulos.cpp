@@ -5,12 +5,14 @@
 // {
 // }
 
-TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores)
+TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores, int _bp_mode)
 {
+
     n_adders = numberOfAdders;
     n_decoders = numberOfDecoders;
     n_loadStores = numberOfLoadStores;
 
+    bp_mode = _bp_mode;
     correct_predictions = 0;
     incorrect_predictions = 0;
     decodes = 0;
@@ -29,7 +31,7 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
     registerStatusTable->cdb = cdb; // messy but necessary
     registerStatusTable->physicalRegisters = physicalRegisters;
 
-    btb = new BranchTargetBuffer(0xFF);
+    btb = new BranchTargetBuffer(0xFF, bp_mode);
 
     rob = new ReorderBuffer(16, cdb, memory, physicalRegisters, this, btb);
 
