@@ -58,8 +58,6 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
         memory[memoryIndex] = word;
         memoryIndex++;
     }
-
-    std::cout << "Mem 0 is" << memory[0] << std::endl;
 }
 
 void TomasulosCPU::Run(int speed, bool step)

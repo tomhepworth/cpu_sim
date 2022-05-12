@@ -190,7 +190,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         case BEQ:
         case BLT:
         case BGE:
-            IF_DEBUG(std::cout << "DECODED BRANCH - doing btb stuff   " << pcValue << " " << btb->mode << std::endl);
+            // IF_DEBUG(std::cout << "DECODED BRANCH - doing btb stuff   " << pcValue << " " << btb->mode << std::endl);
             // If entry for PC exists in btb
             if (btb->mode == 0) // two bit
             {
@@ -205,13 +205,13 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
                     if (btb->predictionBits[pcValue & btb->size] <= 1)
                     {
                         // strongly or weakly DONT take
-                        IF_DEBUG(std::cout << "NOT TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
+                        // IF_DEBUG(std::cout << "NOT TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
                         physicalRegisters[PC] += 1;
                     }
                     else
                     {
                         // strongly or weakly DO take
-                        IF_DEBUG(std::cout << "TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
+                        // IF_DEBUG(std::cout << "TAKING BRANCH: STRENGTH = " << btb->predictionBits[pcValue & btb->size] << std::endl;)
                         physicalRegisters[PC] += imm;
                     }
 
@@ -221,7 +221,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
             }
             else if (btb->mode == 1) // always take
             {
-                IF_DEBUG(std::cout << "SETTING PC to" + std::to_string(physicalRegisters[PC] + imm) << std::endl);
+                // IF_DEBUG(std::cout << "SETTING PC to" + std::to_string(physicalRegisters[PC] + imm) << std::endl);
 
                 physicalRegisters[PC] += imm;
             }
@@ -231,7 +231,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
             }
             else
             {
-                std::cout << "WTF???" << std::endl;
+                assert(false); // This should never happen, we should always be in a mode we know
             }
 
             stallReason = "SPECULATION STALL";

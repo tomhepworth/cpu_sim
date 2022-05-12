@@ -199,7 +199,7 @@ void ReorderBuffer::Cycle()
                 else
                 {
                     // Predicted correctly so just carry on
-                    IF_DEBUG(std::cout << "ROB: PREDICTED CORRECTLY" << std::endl);
+                    // IF_DEBUG(std::cout << "ROB: PREDICTED CORRECTLY" << std::endl);
                     cpu->correct_predictions++;
                 }
             }
@@ -207,7 +207,7 @@ void ReorderBuffer::Cycle()
             {
                 if (oldest->destinationVal == oldest->PCValue + 1)
                 {
-                    IF_DEBUG(std::cout << "FLUSHING" << std::endl);
+                    // IF_DEBUG(std::cout << "FLUSHING" << std::endl);
                     triggerFlush();
                     flushed = true;
                     cpu->incorrect_predictions++;
@@ -252,7 +252,7 @@ void ReorderBuffer::Cycle()
             break;
         }
 
-        IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
+        // IF_DEBUG(std::cout << "COMITTED: " << getStringFromOpcode(oldest->op) << std::endl);
         cdb->broadcast(oldest->destinationTag, oldest->destinationVal);
 
         /*
