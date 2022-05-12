@@ -58,6 +58,7 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
 
 void TomasulosCPU::Run(int speed, bool step)
 {
+    IF_DEBUG(std::cout << "Program size: " << program->size() << std::endl);
     // Main loop
     while (true)
     {
