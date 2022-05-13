@@ -34,7 +34,7 @@ int main(int argc, char *const argv[])
     int option_index = 0;
     static struct option long_options[] = {{"mode", required_argument, NULL, 0}, {"program", required_argument, NULL, 0}, {"debug", no_argument, NULL, 0}, {"step", no_argument, NULL, 0}, {"bp", required_argument, NULL, 0}};
 
-    while ((opt = getopt_long(argc, argv, "s:m:a:d:l:", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "s:m:a:d:l:r:", long_options, &option_index)) != -1)
     {
 
         switch (opt)
@@ -121,6 +121,7 @@ int main(int argc, char *const argv[])
     std::cout << TERMINAL_GREEN << "Successfully Read:\t" << filename.c_str() << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BLUE << "Mode:\t" << ((mode == TOMASULOS) ? "ooo" : "scalar") << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_YELLOW << "Memory Size: " << memSize << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_YELLOW << "ROB Size: " << robSize << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_CYAN << "Debug Mode:\t" << ((debug) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_MAGENTA << "Step mode:\t" << ((step) ? "Enabled" : "Disabled") << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BLUE << "BP mode:\t" << bp_mode << TERMINAL_RESET << std::endl;
