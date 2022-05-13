@@ -21,6 +21,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
 {
     // At start of cycle assume not stalled
     stalled = false;
+    speculated = false;
 
     // If PC not valid then stall
     // if (!registerStatusTable->getRegValid(PC))
@@ -183,6 +184,7 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         lastUpdatedRS = rs->tag;
 
         int32_t targetPC = btb->targets[pcValue & btb->size];
+
         // This code simulates a branch target buffer and handles branch prediction
         switch (opcode)
         {
@@ -191,9 +193,9 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
         case BLT:
         case BGE:
             // IF_DEBUG(std::cout << "DECODED BRANCH - doing btb stuff   " << pcValue << " " << btb->mode << std::endl);
-            // If entry for PC exists in btb
             if (btb->mode == 0) // two bit
             {
+                // If entry for PC exists in btb
                 if (targetPC != -1)
                 {
                     // Set PC to target for next decode
@@ -234,8 +236,9 @@ bool TomasulosDecoder::Cycle(int32_t cpuCycle)
                 assert(false); // This should never happen, we should always be in a mode we know
             }
 
-            stallReason = "SPECULATION STALL";
-            stalled = true;
+            // stallReason = "SPECULATION STALL";
+            // stalled = true;
+            speculated = true;
             break;
         default:
             break;

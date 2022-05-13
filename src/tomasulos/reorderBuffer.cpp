@@ -41,7 +41,7 @@ int32_t ReorderBuffer::push(ReorderBufferEntry *entry)
     if (count == max) // ROB FULL
     {
         // Handle error
-        std::cout << "ROB FULL! - stall! tag:" << entry->destinationTag << std::endl;
+        // std::cout << "ROB FULL! - stall! tag:" << entry->destinationTag << std::endl;
         return -1;
     }
 

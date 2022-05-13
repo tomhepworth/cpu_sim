@@ -26,6 +26,7 @@ int main(int argc, char *const argv[])
     int numDecoders = 1;
     int numAdders = 1;
     int numLoadStores = 1;
+    int robSize = 16;
 
     int opt;
     std::string filename;
@@ -96,6 +97,8 @@ int main(int argc, char *const argv[])
         case 'l':
             numLoadStores = atoi(optarg);
             break;
+        case 'r':
+            robSize = atoi(optarg);
         }
     }
 
@@ -192,7 +195,7 @@ int main(int argc, char *const argv[])
     }
     else if (mode == TOMASULOS)
     {
-        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize, numDecoders, numAdders, numLoadStores, bp_mode);
+        TomasulosCPU *cpu = new TomasulosCPU(program, data, memSize, numDecoders, numAdders, numLoadStores, bp_mode, robSize);
 
         cpu->Run(cpu_speed, step);
     }

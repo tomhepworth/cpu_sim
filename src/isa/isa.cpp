@@ -45,6 +45,9 @@ int32_t PerformALUOperation(OPCODE opcode, int32_t PC, int32_t val1, int32_t val
     case ADDI:
         result = val1 + imm;
         break;
+    case ORI:
+        result = val1 | imm;
+        break;
     case SUB:
         result = val1 - val2;
         break;

@@ -30,10 +30,10 @@ TEST_CASE("add.prog", "[ooo]")
     {
         exit(EXIT_FAILURE);
     }
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
-    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1);
-    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1);
-    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1, 0, 16);
+    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1, 0, 16);
+    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1, 0, 16);
+    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1, 0, 16);
 
     cpu->Run(1, false);
     REQUIRE(cpu->registerStatusTable->getRegValue(T0) == 8);
@@ -60,10 +60,10 @@ TEST_CASE("mul.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
-    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1);
-    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1);
-    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1, 0, 16);
+    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1, 0, 16);
+    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1, 0, 16);
+    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1, 0, 16);
 
     cpu->Run(1, false);
     REQUIRE(cpu->registerStatusTable->getRegValue(T3) == 35);
@@ -91,10 +91,10 @@ TEST_CASE("collatz.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
-    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1);
-    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1);
-    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1, 0, 16);
+    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1, 0, 16);
+    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1, 0, 16);
+    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1, 0, 16);
 
     cpu->Run(1, false);
     REQUIRE(cpu->memory[0] == 3);
@@ -149,10 +149,10 @@ TEST_CASE("loadStoreTest.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
-    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1);
-    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1);
-    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1, 0, 16);
+    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1, 0, 16);
+    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1, 0, 16);
+    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1, 0, 16);
 
     cpu->Run(1, false);
     REQUIRE(cpu->memory[0] == 100);
@@ -203,10 +203,10 @@ TEST_CASE("relativeBranchTest.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
-    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1);
-    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1);
-    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1, 0, 16);
+    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1, 0, 16);
+    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1, 0, 16);
+    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1, 0, 16);
 
     cpu->Run(1, false);
     REQUIRE(cpu->physicalRegisters[T0] == 5);
@@ -237,10 +237,10 @@ TEST_CASE("dataSegmentTest.prog", "[ooo]")
         exit(EXIT_FAILURE);
     }
 
-    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1);
-    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1);
-    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1);
-    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1);
+    TomasulosCPU *cpu = new TomasulosCPU(program, data, 256, 1, 1, 1, 0, 16);
+    TomasulosCPU *cpu1 = new TomasulosCPU(program, data, 256, 1, 2, 1, 0, 16);
+    TomasulosCPU *cpu2 = new TomasulosCPU(program, data, 256, 2, 1, 1, 0, 16);
+    TomasulosCPU *cpu3 = new TomasulosCPU(program, data, 256, 2, 2, 1, 0, 16);
 
     cpu->Run(1, false);
     REQUIRE(cpu->physicalRegisters[T0] == 0xFFFF);

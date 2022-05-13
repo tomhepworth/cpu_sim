@@ -45,6 +45,8 @@ public:
     // Stats to record
     int32_t correct_predictions;
     int32_t incorrect_predictions;
+    int32_t stalls_fullROB;
+    int32_t stalls_noRS;
     int32_t decodes;
     int32_t cycles;                      // How many cycles the processor took to execute the program
     int32_t stalls;                      // How many cycles the processor was stalled during execution
@@ -71,7 +73,7 @@ public:
 
     // Instantiate and set up a tomasulos CPU
     TomasulosCPU() {}
-    TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores, int bp_mode);
+    TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores, int bp_mode, int robSize);
 
     // Start cycling
     void Run(int speed, bool step);

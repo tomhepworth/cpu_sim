@@ -5,7 +5,7 @@
 // {
 // }
 
-TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores, int _bp_mode)
+TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, int32_t _memorySize, int numberOfDecoders, int numberOfAdders, int numberOfLoadStores, int _bp_mode, int robSize)
 {
 
     n_adders = numberOfAdders;
@@ -13,6 +13,8 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
     n_loadStores = numberOfLoadStores;
 
     bp_mode = _bp_mode;
+    stalls_noRS = 0;
+    stalls_fullROB = 0;
     correct_predictions = 0;
     incorrect_predictions = 0;
     decodes = 0;
@@ -33,7 +35,7 @@ TomasulosCPU::TomasulosCPU(runnable_program *prog, std::vector<int32_t> *data, i
 
     btb = new BranchTargetBuffer(0xFF, bp_mode);
 
-    rob = new ReorderBuffer(16, cdb, memory, physicalRegisters, this, btb);
+    rob = new ReorderBuffer(robSize, cdb, memory, physicalRegisters, this, btb);
 
     // Create functional units
     for (int i = 0; i < n_adders; i++)
@@ -95,6 +97,8 @@ void TomasulosCPU::Run(int speed, bool step)
     std::cout << TERMINAL_MAGENTA << "Stats... " << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_GREEN << "Cycles:\t" << TERMINAL_GREEN << cycles << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_RED << "Stalls:\t" << TERMINAL_RED << stalls << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_RED << "Stalls because of full ROB:\t" << TERMINAL_RED << stalls_fullROB << TERMINAL_RESET << std::endl;
+    std::cout << TERMINAL_BOLD_RED << "Stalls because of no available RS:\t" << TERMINAL_RED << stalls_noRS << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_BLUE << "IPC:\t" << TERMINAL_BLUE << mean_ipc << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_GREEN << "Correct Predictions:\t" << TERMINAL_GREEN << correct_predictions << TERMINAL_RESET << std::endl;
     std::cout << TERMINAL_BOLD_RED << "Incorrect Predictions:\t" << TERMINAL_RED << incorrect_predictions << TERMINAL_RESET << std::endl;
@@ -128,13 +132,22 @@ bool TomasulosCPU::Cycle()
         // IF_DEBUG(std::cout << "DECODE:" << i << std::endl;);
 
         decodeStalled = decoders.at(i)->Cycle(decodes); // Keep track of how many cycles we stall on
+        bool speculated = decoders.at(i)->speculated;
+
         if (decodeStalled && stallReason != "HLT seen")
+        {
             stalls++;
+            if (stallReason == "ROB FULL")
+                stalls_fullROB++;
+
+            if (stallReason == "NO FREE RS")
+                stalls_noRS++;
+        }
 
         // If decode didnt stall then it's safe to increase the PC
         // Dont increase if we have reached the end of the program
         int32_t currentPCValue = physicalRegisters[PC];
-        if (!decodeStalled && currentPCValue < program->size() - 1)
+        if (!speculated && !decodeStalled && currentPCValue < program->size() - 1)
         {
             registerStatusTable->setRegValue(PC, currentPCValue + 1);
             physicalRegisters[PC] = currentPCValue + 1;

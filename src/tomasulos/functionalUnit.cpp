@@ -7,8 +7,9 @@ int32_t TomasulosPerformMemoryOperation(int32_t *memory, OPCODE opcode, int32_t 
     switch (opcode)
     {
     case LW:
+
         res = memory[address];
-        // IF_DEBUG(std::cout << "-- Loaded " << res << " from address " << address << std::endl);
+        IF_DEBUG(std::cout << "-- Loaded " << res << " from address " << address << std::endl);
 
         break;
     case SW:
@@ -38,6 +39,9 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
     case ADDI:
         result = val1 + imm;
         break;
+    case ORI:
+        result = val1 | imm;
+        break;
     case SUB:
         result = val1 - val2;
         break;
@@ -62,7 +66,6 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 == val2)
         {
             result = PCValue + imm;
-            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -74,7 +77,6 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 != val2)
         {
             result = PCValue + imm;
-            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -85,7 +87,6 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 < val2)
         {
             result = PCValue + imm;
-            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -96,7 +97,6 @@ int32_t TomasulosPerformALUOperation(int32_t *physicalRegisters, OPCODE opcode, 
         if (val1 >= val2)
         {
             result = PCValue + imm;
-            // physicalRegisters[PC] = result; // SPECULATE EXECUTION BY ALTERING PC HERE
         }
         else
         {
@@ -160,9 +160,17 @@ void LoadStoreUnit::Cycle()
         pcValue = toExecute->pcValue;
 
         resultTag = toExecute->tag;
-
-        // Loads and stores need to add offset to rs2 to get the address
-        calculatedAddress = rs2Val + imm;
+        IF_DEBUG(std::cout << getStringFromOpcode(opcode) << " MEMORY::: " << rs1Val << "   " << rs2Val << "   " << imm << std::endl);
+        if (opcode == LW)
+        {
+            // lw t0, sp, 8 - Loads (dereferences) from memory address (sp + 8) into register t0. Loads rd with with rs1 + imm
+            calculatedAddress = rs1Val + imm;
+        }
+        else
+        {
+            // sw t0, sp, 8- Stores (dereferences) from register t0 into memory address (sp + 8). sb = store byte, sh = store halfword, sw = store word, sd = store doubleword
+            calculatedAddress = rs2Val + imm;
+        }
 
         phase = MEMORY_OPERATION; // Switch phase for next time
     }
@@ -180,6 +188,7 @@ void LoadStoreUnit::Cycle()
         case LW:
             // For a load we need to fetch the value from memory then commit the result to the ROB
             result = memory[calculatedAddress];
+            IF_DEBUG(std::cout << "LOADED " << result << " from " << calculatedAddress << std::endl);
             rob->updateField(opcode, resultTag, result, -1, -1, true, false);
             break;
         default:

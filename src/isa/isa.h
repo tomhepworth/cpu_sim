@@ -20,6 +20,7 @@ enum OPCODE
     OR,
     XOR,
     ADDI,
+    ORI,
     LW,
     SW,
     BEQ,

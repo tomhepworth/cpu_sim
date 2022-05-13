@@ -20,6 +20,7 @@ std::map<std::string, std::pair<OPCODE, INSTRUCTION_FORMAT>> instructionMap = {
     {"or", std::make_pair(OR, R)},
     {"xor", std::make_pair(XOR, R)},
     {"addi", std::make_pair(ADDI, I)},
+    {"ori", std::make_pair(ORI, I)},
     {"sw", std::make_pair(SW, S)},
     {"lw", std::make_pair(LW, I)},
     {"beq", std::make_pair(BEQ, B)},
@@ -391,7 +392,7 @@ bool parse(std::string filename, runnable_program *prog, std::vector<int32_t> *d
         if (i->labelToReplace.at(0) == '.')
         {
             i->imm = variableTable.find(i->labelToReplace)->second;
-            std::cout << "SET INSTRUCTION " << i->rawText << " IMM TO " << i->imm;
+            // std::cout << "SET INSTRUCTION " << i->rawText << " IMM TO " << i->imm;
         }
     }
 

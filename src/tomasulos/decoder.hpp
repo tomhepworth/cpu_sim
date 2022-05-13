@@ -36,6 +36,7 @@ public:
   int32_t imm;
   int32_t instructionPC;
   bool stalled;
+  bool speculated;
 
   TAG lastUpdatedRS;
 
