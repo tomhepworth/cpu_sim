@@ -1,6 +1,6 @@
 # Tom Hepworth ACA coursework
 
-My CPU simulator for the University of Bristol's advanced computer architecture unit. My simulator is heavily based on RISC-V.
+My cycle level CPU simulator for the University of Bristol's advanced computer architecture unit. My simulator based on a RISC-V ISA and implements an extended version of Tomasulos algorithm, with a reorder buffer and 2-bit branch prediction.
 
 # Compile using `make`
 
