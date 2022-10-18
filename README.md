@@ -24,9 +24,3 @@ Add the flag --debug to see what's going on inside the CPU. Add the flag --step 
 
 -   Catch2 (unit tests): https://github.com/catchorg/Catch2
 
-# Notes
-
--   Collatz benchmark running with 5 stage scalar, first test = 145 cycles
--   Collatz benchmark running with tomasulos, first test = 79 cycles
--   Collatz benchmark running with tomasulos superscalar, 2 decoders, 3 adders, 1 memory, first test = 47 cycles
--
